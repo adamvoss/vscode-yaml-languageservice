@@ -1,23 +1,25 @@
 /*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Adam Voss. All rights reserved.
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 'use strict';
 
 import assert = require('assert');
-import Parser = require('../parser/jsonParser');
-import SchemaService = require('../services/jsonSchemaService');
-import JsonSchema = require('../jsonSchema');
+import YamlParser = require('../parser/yamlParser');
+import Parser = require('../../vscode-json-languageservice/src/parser/jsonParser');
+import SchemaService = require('../../vscode-json-languageservice/src/services/jsonSchemaService');
+import JsonSchema = require('../../vscode-json-languageservice/src/jsonSchema');
 
-suite('JSON Parser', () => {
+suite('YAML Parser', () => {
 
 	function isValid(json: string): void {
-		var result = Parser.parse(json);
+		var result = YamlParser.parse(json);
 		assert.equal(result.errors.length + result.warnings.length, 0);
 	}
 
 	function isInvalid(json: string, ...expectedErrors: Parser.ErrorCode[]): void {
-		var result = Parser.parse(json);
+		var result = YamlParser.parse(json);
 		if (expectedErrors.length === 0) {
 			assert.ok(result.errors.length > 0);
 		} else {
@@ -29,7 +31,7 @@ suite('JSON Parser', () => {
 
 
 	test('Invalid body', function() {
-		var result = Parser.parse('*');
+		var result = YamlParser.parse('*');
 		assert.equal(result.errors.length, 1);
 
 		isInvalid('{}[]');
@@ -98,7 +100,7 @@ suite('JSON Parser', () => {
 
 	test('Simple AST', function() {
 
-		var result = Parser.parse('{}');
+		var result = YamlParser.parse('{}');
 
 		assert.strictEqual(result.errors.length, 0);
 
@@ -109,7 +111,7 @@ suite('JSON Parser', () => {
 
 		assert.strictEqual(result.getNodeFromOffset(2), null);
 
-		result = Parser.parse('[null]');
+		result = YamlParser.parse('[null]');
 		assert.strictEqual(result.errors.length, 0);
 
 		node = result.getNodeFromOffset(2);
@@ -117,7 +119,7 @@ suite('JSON Parser', () => {
 		assert.equal(node.type, 'null');
 		assert.deepEqual(node.getPath(), [0]);
 
-		result = Parser.parse('{"a":true}');
+		result = YamlParser.parse('{"a":true}');
 		assert.strictEqual(result.errors.length, 0);
 
 		node = result.getNodeFromOffset(3);
@@ -148,7 +150,7 @@ suite('JSON Parser', () => {
 	test('Nested AST', function() {
 
 		var content = '{\n\t"key" : {\n\t"key2": 42\n\t}\n}';
-		var result = Parser.parse(content);
+		var result = YamlParser.parse(content);
 
 		assert.strictEqual(result.errors.length, 0);
 
@@ -165,7 +167,7 @@ suite('JSON Parser', () => {
 
 	test('Nested AST in Array', function() {
 
-		var result = Parser.parse('{"key":[{"key2":42}]}');
+		var result = YamlParser.parse('{"key":[{"key2":42}]}');
 
 		assert.strictEqual(result.errors.length, 0);
 
@@ -179,7 +181,7 @@ suite('JSON Parser', () => {
 	test('Multiline', function() {
 
 		var content = '{\n\t\n}';
-		var result = Parser.parse(content);
+		var result = YamlParser.parse(content);
 
 		assert.strictEqual(result.errors.length, 0);
 
@@ -188,7 +190,7 @@ suite('JSON Parser', () => {
 		assert.notEqual(node, null);
 
 		content = '{\n"first":true\n\n}';
-		result = Parser.parse(content);
+		result = YamlParser.parse(content);
 
 		node = result.getNodeFromOffset(content.length - 2);
 		assert.equal(node.type, 'object');
@@ -200,7 +202,7 @@ suite('JSON Parser', () => {
 	test('Expand errors to entire tokens', function() {
 
 		var content = '{\n"key":32,\nerror\n}';
-		var result = Parser.parse(content);
+		var result = YamlParser.parse(content);
 		assert.equal(result.errors.length, 1);
 		assert.equal(result.errors[0].location.start, content.indexOf('error'));
 		assert.equal(result.errors[0].location.end, content.indexOf('error') + 5);
@@ -209,7 +211,7 @@ suite('JSON Parser', () => {
 	test('Errors at the end of the file', function() {
 
 		var content = '{\n"key":32\n ';
-		var result = Parser.parse(content);
+		var result = YamlParser.parse(content);
 		assert.equal(result.errors.length, 1);
 		assert.equal(result.errors[0].location.start, 9);
 		assert.equal(result.errors[0].location.end, 10);
@@ -218,7 +220,7 @@ suite('JSON Parser', () => {
 	test('Getting keys out of an object', function() {
 
 		var content = '{\n"key":32,\n\n"key2":45}';
-		var result = Parser.parse(content);
+		var result = YamlParser.parse(content);
 		assert.equal(result.errors.length, 0);
 		var node = result.getNodeFromOffset(content.indexOf('32,\n') + 4);
 
@@ -230,7 +232,7 @@ suite('JSON Parser', () => {
 	test('Validate types', function() {
 
 		var str = '{"number": 3.4, "integer": 42, "string": "some string", "boolean":true, "null":null, "object":{}, "array":[1, 2]}';
-		var result = Parser.parse(str);
+		var result = YamlParser.parse(str);
 
 		assert.strictEqual(result.errors.length, 0);
 
@@ -240,14 +242,14 @@ suite('JSON Parser', () => {
 
 		assert.strictEqual(result.warnings.length, 0);
 
-		result = Parser.parse(str);
+		result = YamlParser.parse(str);
 		result.validate({
 			type: 'array'
 		});
 
 		assert.strictEqual(result.warnings.length, 1);
 
-		result = Parser.parse(str);
+		result = YamlParser.parse(str);
 
 		result.validate({
 			type: 'object',
@@ -278,7 +280,7 @@ suite('JSON Parser', () => {
 
 		assert.strictEqual(result.warnings.length, 0);
 
-		result = Parser.parse(str);
+		result = YamlParser.parse(str);
 		result.validate({
 			type: 'object',
 			properties: {
@@ -308,7 +310,7 @@ suite('JSON Parser', () => {
 
 		assert.strictEqual(result.warnings.length, 7);
 
-		result = Parser.parse(str);
+		result = YamlParser.parse(str);
 		result.validate({
 			type: 'object',
 			properties: {
@@ -320,7 +322,7 @@ suite('JSON Parser', () => {
 
 		assert.strictEqual(result.warnings.length, 1);
 
-		result = Parser.parse(str);
+		result = YamlParser.parse(str);
 		result.validate({
 			type: 'object',
 			properties: {
@@ -332,7 +334,7 @@ suite('JSON Parser', () => {
 
 		assert.strictEqual(result.warnings.length, 0);
 
-		result = Parser.parse(str);
+		result = YamlParser.parse(str);
 		result.validate({
 			type: 'object',
 			properties: {
@@ -347,7 +349,7 @@ suite('JSON Parser', () => {
 
 		assert.strictEqual(result.warnings.length, 0);
 
-		result = Parser.parse(str);
+		result = YamlParser.parse(str);
 		result.validate({
 			type: 'object',
 			properties: {
@@ -365,7 +367,7 @@ suite('JSON Parser', () => {
 
 	test('Required properties', function() {
 
-		var result = Parser.parse('{"integer": 42, "string": "some string", "boolean":true}');
+		var result = YamlParser.parse('{"integer": 42, "string": "some string", "boolean":true}');
 
 		assert.strictEqual(result.errors.length, 0);
 
@@ -376,7 +378,7 @@ suite('JSON Parser', () => {
 
 		assert.strictEqual(result.warnings.length, 0);
 
-		result = Parser.parse('{"integer": 42, "string": "some string", "boolean":true}');
+		result = YamlParser.parse('{"integer": 42, "string": "some string", "boolean":true}');
 		result.validate({
 			type: 'object',
 			required: ['notpresent']
@@ -387,7 +389,7 @@ suite('JSON Parser', () => {
 
 	test('Arrays', function() {
 
-		var result = Parser.parse('[1, 2, 3]');
+		var result = YamlParser.parse('[1, 2, 3]');
 
 		assert.strictEqual(result.errors.length, 0);
 
@@ -402,7 +404,7 @@ suite('JSON Parser', () => {
 
 		assert.strictEqual(result.warnings.length, 0);
 
-		result = Parser.parse('[1, 2, 3]');
+		result = YamlParser.parse('[1, 2, 3]');
 		result.validate({
 			type: 'array',
 			items: {
@@ -413,7 +415,7 @@ suite('JSON Parser', () => {
 
 		assert.strictEqual(result.warnings.length, 1);
 
-		result = Parser.parse('[1, 2, 3]');
+		result = YamlParser.parse('[1, 2, 3]');
 		result.validate({
 			type: 'array',
 			items: {
@@ -428,7 +430,7 @@ suite('JSON Parser', () => {
 
 	test('Strings', function() {
 
-		var result = Parser.parse('{"one":"test"}');
+		var result = YamlParser.parse('{"one":"test"}');
 
 		assert.strictEqual(result.errors.length, 0);
 
@@ -445,7 +447,7 @@ suite('JSON Parser', () => {
 
 		assert.strictEqual(result.warnings.length, 0);
 
-		result = Parser.parse('{"one":"test"}');
+		result = YamlParser.parse('{"one":"test"}');
 		result.validate({
 			type: 'object',
 			properties: {
@@ -458,7 +460,7 @@ suite('JSON Parser', () => {
 
 		assert.strictEqual(result.warnings.length, 1);
 
-		result = Parser.parse('{"one":"test"}');
+		result = YamlParser.parse('{"one":"test"}');
 		result.validate({
 			type: 'object',
 			properties: {
@@ -471,7 +473,7 @@ suite('JSON Parser', () => {
 
 		assert.strictEqual(result.warnings.length, 1);
 
-		result = Parser.parse('{"one":"test"}');
+		result = YamlParser.parse('{"one":"test"}');
 		result.validate({
 			type: 'object',
 			properties: {
@@ -484,7 +486,7 @@ suite('JSON Parser', () => {
 
 		assert.strictEqual(result.warnings.length, 0);
 
-		result = Parser.parse('{"one":"test"}');
+		result = YamlParser.parse('{"one":"test"}');
 		result.validate({
 			type: 'object',
 			properties: {
@@ -501,7 +503,7 @@ suite('JSON Parser', () => {
 
 	test('Numbers', function() {
 
-		var result = Parser.parse('{"one": 13.45e+1}');
+		var result = YamlParser.parse('{"one": 13.45e+1}');
 
 		assert.strictEqual(result.errors.length, 0);
 
@@ -518,7 +520,7 @@ suite('JSON Parser', () => {
 
 		assert.strictEqual(result.warnings.length, 0);
 
-		result = Parser.parse('{"one": 13.45e+1}');
+		result = YamlParser.parse('{"one": 13.45e+1}');
 
 		result.validate({
 			type: 'object',
@@ -532,7 +534,7 @@ suite('JSON Parser', () => {
 
 		assert.strictEqual(result.warnings.length, 1, 'below minimum');
 
-		result = Parser.parse('{"one": 13.45e+1}');
+		result = YamlParser.parse('{"one": 13.45e+1}');
 		result.validate({
 			type: 'object',
 			properties: {
@@ -545,7 +547,7 @@ suite('JSON Parser', () => {
 
 		assert.strictEqual(result.warnings.length, 1, 'above maximum');
 
-		result = Parser.parse('{"one": 13.45e+1}');
+		result = YamlParser.parse('{"one": 13.45e+1}');
 		result.validate({
 			type: 'object',
 			properties: {
@@ -559,7 +561,7 @@ suite('JSON Parser', () => {
 
 		assert.strictEqual(result.warnings.length, 1, 'at exclusive mininum');
 
-		result = Parser.parse('{"one": 13.45e+1}');
+		result = YamlParser.parse('{"one": 13.45e+1}');
 		result.validate({
 			type: 'object',
 			properties: {
@@ -573,7 +575,7 @@ suite('JSON Parser', () => {
 
 		assert.strictEqual(result.warnings.length, 1, 'at exclusive maximum');
 
-		result = Parser.parse('{"one": 13.45e+1}');
+		result = YamlParser.parse('{"one": 13.45e+1}');
 		result.validate({
 			type: 'object',
 			properties: {
@@ -590,7 +592,7 @@ suite('JSON Parser', () => {
 
 	test('getNodeFromOffset', function() {
 		var content = '{"a": 1,\n\n"d": 2}';
-		var doc = Parser.parse(content);
+		var doc = YamlParser.parse(content);
 
 		assert.strictEqual(doc.errors.length, 0);
 
@@ -601,17 +603,17 @@ suite('JSON Parser', () => {
 
 
 	test('Duplicate keys', function() {
-		var doc = Parser.parse('{"a": 1, "a": 2}');
+		var doc = YamlParser.parse('{"a": 1, "a": 2}');
 
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 1, 'Keys should not be the same');
 
-		var doc = Parser.parse('{"a": { "a": 2, "a": 3}}');
+		var doc = YamlParser.parse('{"a": { "a": 2, "a": 3}}');
 
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 1, 'Keys should not be the same');
 
-		var doc = Parser.parse('[{ "a": 2, "a": 3}]');
+		var doc = YamlParser.parse('[{ "a": 2, "a": 3}]');
 
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 1, 'Keys should not be the same');
@@ -620,7 +622,7 @@ suite('JSON Parser', () => {
 
 	test('allOf', function() {
 
-		var doc = Parser.parse('{"prop1": 42, "prop2": true}');
+		var doc = YamlParser.parse('{"prop1": 42, "prop2": true}');
 
 		var schema: JsonSchema.JSONSchema = {
 			id: 'main',
@@ -651,7 +653,7 @@ suite('JSON Parser', () => {
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 0);
 
-		doc = Parser.parse('{"prop1": 42, "prop2": 123}');
+		doc = YamlParser.parse('{"prop1": 42, "prop2": 123}');
 
 		doc.validate(schema);
 
@@ -661,7 +663,7 @@ suite('JSON Parser', () => {
 
 	test('anyOf', function() {
 
-		var doc = Parser.parse('{"prop1": 42, "prop2": true}');
+		var doc = YamlParser.parse('{"prop1": 42, "prop2": true}');
 
 		var schema: JsonSchema.JSONSchema = {
 			id: 'main',
@@ -689,14 +691,14 @@ suite('JSON Parser', () => {
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 0);
 
-		doc = Parser.parse('{"prop1": 42, "prop2": 123}');
+		doc = YamlParser.parse('{"prop1": 42, "prop2": 123}');
 
 		doc.validate(schema);
 
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 0);
 
-		doc = Parser.parse('{"prop1": "a string", "prop2": 123}');
+		doc = YamlParser.parse('{"prop1": "a string", "prop2": 123}');
 
 		doc.validate(schema);
 
@@ -706,7 +708,7 @@ suite('JSON Parser', () => {
 
 	test('oneOf', function() {
 
-		var doc = Parser.parse('{"prop1": 42, "prop2": true}');
+		var doc = YamlParser.parse('{"prop1": 42, "prop2": true}');
 
 		var schema: JsonSchema.JSONSchema = {
 			id: 'main',
@@ -734,14 +736,14 @@ suite('JSON Parser', () => {
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 1);
 
-		doc = Parser.parse('{"prop1": 42, "prop2": 123}');
+		doc = YamlParser.parse('{"prop1": 42, "prop2": 123}');
 
 		doc.validate(schema);
 
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 0);
 
-		doc = Parser.parse('{"prop1": "a string", "prop2": 123}');
+		doc = YamlParser.parse('{"prop1": "a string", "prop2": 123}');
 
 		doc.validate(schema);
 
@@ -752,7 +754,7 @@ suite('JSON Parser', () => {
 
 	test('not', function() {
 
-		var doc = Parser.parse('{"prop1": 42, "prop2": true}');
+		var doc = YamlParser.parse('{"prop1": 42, "prop2": true}');
 
 		var schema: JsonSchema.JSONSchema = {
 			id: 'main',
@@ -771,7 +773,7 @@ suite('JSON Parser', () => {
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 1);
 
-		doc = Parser.parse('{"prop1": "test"}');
+		doc = YamlParser.parse('{"prop1": "test"}');
 
 		doc.validate(schema);
 
@@ -781,7 +783,7 @@ suite('JSON Parser', () => {
 
 	test('minProperties', function() {
 
-		var doc = Parser.parse('{"prop1": 42, "prop2": true}');
+		var doc = YamlParser.parse('{"prop1": 42, "prop2": true}');
 
 		var schema: JsonSchema.JSONSchema = {
 			minProperties: 2
@@ -809,7 +811,7 @@ suite('JSON Parser', () => {
 
 	test('maxProperties', function() {
 
-		var doc = Parser.parse('{"prop1": 42, "prop2": true}');
+		var doc = YamlParser.parse('{"prop1": 42, "prop2": true}');
 
 		var schema: JsonSchema.JSONSchema = {
 			maxProperties: 2
@@ -837,7 +839,7 @@ suite('JSON Parser', () => {
 
 	test('patternProperties', function() {
 
-		var doc = Parser.parse('{"prop1": 42, "prop2": 42}');
+		var doc = YamlParser.parse('{"prop1": 42, "prop2": 42}');
 
 		var schema: JsonSchema.JSONSchema = {
 			id: 'main',
@@ -853,14 +855,14 @@ suite('JSON Parser', () => {
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 0);
 
-		doc = Parser.parse('{"prop1": 42, "prop2": true}');
+		doc = YamlParser.parse('{"prop1": 42, "prop2": true}');
 
 		doc.validate(schema);
 
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 1);
 
-		doc = Parser.parse('{"prop1": 42, "prop2": 123, "aprop3": true}');
+		doc = YamlParser.parse('{"prop1": 42, "prop2": 123, "aprop3": true}');
 
 		doc.validate(schema);
 
@@ -870,7 +872,7 @@ suite('JSON Parser', () => {
 
 	test('additionalProperties', function() {
 
-		var doc = Parser.parse('{"prop1": 42, "prop2": 42}');
+		var doc = YamlParser.parse('{"prop1": 42, "prop2": 42}');
 
 		var schema: JsonSchema.JSONSchema = {
 			additionalProperties: {
@@ -883,7 +885,7 @@ suite('JSON Parser', () => {
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 0);
 
-		doc = Parser.parse('{"prop1": 42, "prop2": true}');
+		doc = YamlParser.parse('{"prop1": 42, "prop2": true}');
 
 		doc.validate(schema);
 
@@ -901,7 +903,7 @@ suite('JSON Parser', () => {
 			}
 		};
 
-		doc = Parser.parse('{"prop1": true, "prop2": 42}');
+		doc = YamlParser.parse('{"prop1": true, "prop2": 42}');
 
 		doc.validate(schema);
 
@@ -917,14 +919,14 @@ suite('JSON Parser', () => {
 			additionalProperties: false
 		};
 
-		doc = Parser.parse('{"prop1": true, "prop2": 42}');
+		doc = YamlParser.parse('{"prop1": true, "prop2": 42}');
 
 		doc.validate(schema);
 
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 1);
 
-		doc = Parser.parse('{"prop1": true}');
+		doc = YamlParser.parse('{"prop1": true}');
 
 		doc.validate(schema);
 
@@ -934,7 +936,7 @@ suite('JSON Parser', () => {
 
 	test('enum', function() {
 
-		var doc = Parser.parse('{"prop": "harmonica"}');
+		var doc = YamlParser.parse('{"prop": "harmonica"}');
 
 		var schema: JsonSchema.JSONSchema = {
 			properties: {
@@ -949,7 +951,7 @@ suite('JSON Parser', () => {
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 0);
 
-		doc = Parser.parse('{"prop": "harp"}');
+		doc = YamlParser.parse('{"prop": "harp"}');
 		doc.validate(schema);
 
 		assert.strictEqual(doc.errors.length, 0);
@@ -963,19 +965,19 @@ suite('JSON Parser', () => {
 			}
 		};
 
-		doc = Parser.parse('{"prop": 42}');
+		doc = YamlParser.parse('{"prop": 42}');
 		doc.validate(schema);
 
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 0);
 
-		doc = Parser.parse('{"prop": 1337}');
+		doc = YamlParser.parse('{"prop": 1337}');
 		doc.validate(schema);
 
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 1);
 
-		var doc = Parser.parse('{"prop": { "name": "David" }}');
+		var doc = YamlParser.parse('{"prop": { "name": "David" }}');
 
 		var schema: JsonSchema.JSONSchema = {
 			properties: {
@@ -993,7 +995,7 @@ suite('JSON Parser', () => {
 
 	test('uniqueItems', function() {
 
-		var doc = Parser.parse('[1, 2, 3]');
+		var doc = YamlParser.parse('[1, 2, 3]');
 
 		var schema: JsonSchema.JSONSchema = {
 			type: 'array',
@@ -1005,13 +1007,13 @@ suite('JSON Parser', () => {
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 0);
 
-		doc = Parser.parse('[1, 2, 3, 2]');
+		doc = YamlParser.parse('[1, 2, 3, 2]');
 		doc.validate(schema);
 
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 1);
 
-		doc = Parser.parse('[1, 2, "string", 52, "string"]');
+		doc = YamlParser.parse('[1, 2, "string", 52, "string"]');
 		doc.validate(schema);
 
 		assert.strictEqual(doc.errors.length, 0);
@@ -1020,7 +1022,7 @@ suite('JSON Parser', () => {
 
 	test('items as array', function() {
 
-		var doc = Parser.parse('[1, true, "string"]');
+		var doc = YamlParser.parse('[1, true, "string"]');
 
 		var schema: JsonSchema.JSONSchema = {
 			type: 'array',
@@ -1042,13 +1044,13 @@ suite('JSON Parser', () => {
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 0);
 
-		doc = Parser.parse('["string", 1, true]');
+		doc = YamlParser.parse('["string", 1, true]');
 		doc.validate(schema);
 
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 3);
 
-		doc = Parser.parse('[1, true, "string", "another", 42]');
+		doc = YamlParser.parse('[1, true, "string", "another", 42]');
 		doc.validate(schema);
 
 		assert.strictEqual(doc.errors.length, 0);
@@ -1057,7 +1059,7 @@ suite('JSON Parser', () => {
 
 	test('additionalItems', function() {
 
-		var doc = Parser.parse('[1, true, "string"]');
+		var doc = YamlParser.parse('[1, true, "string"]');
 
 		var schema: JsonSchema.JSONSchema = {
 			type: 'array',
@@ -1080,7 +1082,7 @@ suite('JSON Parser', () => {
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 0);
 
-		doc = Parser.parse('[1, true, "string", 42]');
+		doc = YamlParser.parse('[1, true, "string", 42]');
 		doc.validate(schema);
 
 		assert.strictEqual(doc.errors.length, 0);
@@ -1089,7 +1091,7 @@ suite('JSON Parser', () => {
 
 	test('multipleOf', function() {
 
-		var doc = Parser.parse('[42]');
+		var doc = YamlParser.parse('[42]');
 
 		var schema: JsonSchema.JSONSchema = {
 			type: 'array',
@@ -1104,7 +1106,7 @@ suite('JSON Parser', () => {
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 0);
 
-		doc = Parser.parse('[43]');
+		doc = YamlParser.parse('[43]');
 		doc.validate(schema);
 
 		assert.strictEqual(doc.errors.length, 0);
@@ -1113,7 +1115,7 @@ suite('JSON Parser', () => {
 
 	test('dependencies with array', function() {
 
-		var doc = Parser.parse('{"a":true, "b":42}');
+		var doc = YamlParser.parse('{"a":true, "b":42}');
 
 		var schema: JsonSchema.JSONSchema = {
 			type: 'object',
@@ -1132,13 +1134,13 @@ suite('JSON Parser', () => {
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 0);
 
-		doc = Parser.parse('{}');
+		doc = YamlParser.parse('{}');
 		doc.validate(schema);
 
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 0);
 
-		doc = Parser.parse('{"a":true}');
+		doc = YamlParser.parse('{"a":true}');
 		doc.validate(schema);
 
 		assert.strictEqual(doc.errors.length, 0);
@@ -1147,7 +1149,7 @@ suite('JSON Parser', () => {
 
 	test('dependencies with schema', function() {
 
-		var doc = Parser.parse('{"a":true, "b":42}');
+		var doc = YamlParser.parse('{"a":true, "b":42}');
 
 		var schema: JsonSchema.JSONSchema = {
 			type: 'object',
@@ -1172,19 +1174,19 @@ suite('JSON Parser', () => {
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 0);
 
-		doc = Parser.parse('{}');
+		doc = YamlParser.parse('{}');
 		doc.validate(schema);
 
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 0);
 
-		doc = Parser.parse('{"a":true}');
+		doc = YamlParser.parse('{"a":true}');
 		doc.validate(schema);
 
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 0);
 
-		doc = Parser.parse('{"a":true, "b": "string"}');
+		doc = YamlParser.parse('{"a":true, "b": "string"}');
 		doc.validate(schema);
 
 		assert.strictEqual(doc.errors.length, 0);
@@ -1193,7 +1195,7 @@ suite('JSON Parser', () => {
 
 	test('type as array', function() {
 
-		var doc = Parser.parse('{"prop": 42}');
+		var doc = YamlParser.parse('{"prop": 42}');
 
 		var schema: JsonSchema.JSONSchema = {
 			type: 'object',
@@ -1209,13 +1211,13 @@ suite('JSON Parser', () => {
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 0);
 
-		doc = Parser.parse('{"prop": "string"}');
+		doc = YamlParser.parse('{"prop": "string"}');
 		doc.validate(schema);
 
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 0);
 
-		doc = Parser.parse('{"prop": true}');
+		doc = YamlParser.parse('{"prop": true}');
 		doc.validate(schema);
 
 		assert.strictEqual(doc.errors.length, 0);
@@ -1224,7 +1226,7 @@ suite('JSON Parser', () => {
 
 	test('deprecated', function() {
 
-		var doc = Parser.parse('{"prop": 42}');
+		var doc = YamlParser.parse('{"prop": 42}');
 
 		var schema: JsonSchema.JSONSchema = {
 			type: 'object',
@@ -1243,7 +1245,7 @@ suite('JSON Parser', () => {
 
 	test('Strings with spaces', function() {
 
-		var result = Parser.parse('{"key1":"first string", "key2":["second string"]}');
+		var result = YamlParser.parse('{"key1":"first string", "key2":["second string"]}');
 		assert.strictEqual(result.errors.length, 0);
 
 		var node = result.getNodeFromOffset(9);
@@ -1256,7 +1258,7 @@ suite('JSON Parser', () => {
 
 	test('Schema information on node', function() {
 
-		var result = Parser.parse('{"key":42}');
+		var result = YamlParser.parse('{"key":42}');
 		assert.strictEqual(result.errors.length, 0);
 
 		var schema: JsonSchema.JSONSchema = {
@@ -1293,7 +1295,7 @@ suite('JSON Parser', () => {
 	test('parse with comments', function() {
 
 		function parse<T>(v: string): T {
-			var result = Parser.parse(v);
+			var result = YamlParser.parse(v);
 			assert.equal(result.errors.length, 0);
 			return <T>result.root.getValue();
 		}
@@ -1312,7 +1314,7 @@ suite('JSON Parser', () => {
 	test('parse with comments disabled', function() {
 
 		function assertParse(v: string, expectedErrors: number): void {
-			var result = Parser.parse(v, {disallowComments:true});
+			var result = YamlParser.parse(v, {disallowComments:true});
 			assert.equal(result.errors.length, expectedErrors);
 		}
 
