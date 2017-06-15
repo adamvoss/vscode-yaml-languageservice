@@ -1,5 +1,5 @@
 import assert = require('assert');
-import { determineScalarType as sut, ScalarType } from '../parser/yamlParser'
+import { determineScalarType as sut, ScalarType, parseYamlBoolean, parseYamlInteger, parseYamlFloat } from '../parser/yamlParser'
 
 import * as Yaml from 'yaml-ast-parser'
 
@@ -38,7 +38,7 @@ suite('determineScalarType', () => {
 
         test("float-NaN", ScalarType.float, [".nan", ".NaN", ".NAN"])
 
-        test("string-like names", ScalarType.string, ["'true'", "TrUe", "nULl", "''", "'0'", '"1"', '" .5"', ".inF", ".nAn"])
+        test("string", ScalarType.string, ["'true'", "TrUe", "nULl", "''", "'0'", '"1"', '" .5"', ".inF", ".nAn"])
     })
 
     suite('Flow style', () => {
@@ -64,5 +64,93 @@ suite('determineScalarType', () => {
             }
         })
     })
-}
-)
+})
+
+suite('parseYamlInteger', () => {
+    test('decimal', function () {
+        assert.strictEqual(parseYamlInteger("0"), 0)
+        assert.strictEqual(parseYamlInteger("-19"), -19)
+        assert.strictEqual(parseYamlInteger("+1"), 1)
+    })
+
+    test('hexadecimal', function () {
+        assert.strictEqual(parseYamlInteger("0x3A"), 58)
+    })
+
+    test('octal', function () {
+        assert.strictEqual(parseYamlInteger("0o7"), 7)
+    })
+
+    test('otherwise', function () {
+        let error;
+        try {
+            parseYamlInteger("'1'")
+        }
+        catch (e) {
+            error = e;
+        }
+
+        assert(error, "should have thrown")
+    })
+})
+
+suite('parseYamlBoolean', () => {
+    test('true', function () {
+        for (const value of ["true", "True", "TRUE"]) {
+            assert.strictEqual(parseYamlBoolean(value), true, value);
+        }
+    })
+
+    test('false', function () {
+        for (const value of ["false", "False", "FALSE"]) {
+            assert.strictEqual(parseYamlBoolean(value), false, value);
+        }
+    })
+
+    test('otherwise', function () {
+        let error;
+        try {
+            parseYamlBoolean("tRUE")
+        }
+        catch (e) {
+            error = e;
+        }
+
+        assert(error, "should have thrown")
+    })
+})
+
+suite('parseYamlFloat', () => {
+    test('float', function () {
+        const values = ["0.", "-0.0", ".5", "+12e03", "-2E+05"]
+        const expected = [0, -0, 0.5, 12000, -200000]
+        for (var index = 0; index < values.length; index++) {
+            assert.strictEqual(parseYamlFloat(values[index]), expected[index])
+        }
+    })
+
+    test('NaN', function () {
+        for (const value of [".nan", ".NaN", ".NAN"]) {
+            assert(isNaN(parseYamlFloat(value)), `isNaN(${value})`)
+        }
+    })
+
+    test('infinity', function () {
+        assert.strictEqual(parseYamlFloat(".inf"),
+            Infinity)
+        assert.strictEqual(parseYamlFloat("-.Inf"), -Infinity)
+        assert.strictEqual(parseYamlFloat(".INF"), Infinity)
+    })
+
+    test('otherwise', function () {
+        let error;
+        try {
+            parseYamlFloat("text")
+        }
+        catch (e) {
+            error = e;
+        }
+
+        assert(error, "should have thrown")
+    })
+})

@@ -16,8 +16,7 @@ function recursivelyBuildAst(parent: ASTNode, node: Yaml.YAMLNode): ASTNode {
 		case Yaml.Kind.MAP: {
 			const instance = <Yaml.YamlMap>node;
 
-			// TODO: Change Segment value
-			const result = new ObjectASTNode(parent, node.value, node.startPosition, node.endPosition)
+			const result = new ObjectASTNode(parent, null, node.startPosition, node.endPosition)
 			result.addProperty
 
 			// TODO: Could watch for duplicate keys
@@ -31,14 +30,17 @@ function recursivelyBuildAst(parent: ASTNode, node: Yaml.YAMLNode): ASTNode {
 			const instance = <Yaml.YAMLMapping>node;
 			const key = instance.key;
 
-			// TODO set name here?
-			const keyNode = new StringASTNode(null, key.value, true, key.startPosition, key.endPosition);
+			const keyNode = new StringASTNode(null, null, true, key.startPosition, key.endPosition);
 			keyNode.value = key.value;
 
 			// TODO: Could watch for duplicate properties
 			const result = new PropertyASTNode(parent, keyNode)
 			result.end = instance.endPosition
-			result.setValue(recursivelyBuildAst(result, instance.value))
+
+			const valueNode = recursivelyBuildAst(result, instance.value)
+			valueNode.location = key.value
+
+			result.setValue(valueNode)
 
 			return result;
 		}
@@ -61,16 +63,16 @@ function recursivelyBuildAst(parent: ASTNode, node: Yaml.YAMLNode): ASTNode {
 
 			const type = determineScalarType(instance)
 
-			const name = instance.value;
+			// The name is set either by the sequence or the mapping case.
+			const name = null;
 			const value = instance.value;
 
-			// TODO: Set Segment
 			switch (type) {
 				case ScalarType.null: {
 					return new NullASTNode(parent, name, instance.startPosition, instance.endPosition);
 				}
 				case ScalarType.bool: {
-					return new BooleanASTNode(parent, name, parseYamlBool(value), node.startPosition, node.endPosition)
+					return new BooleanASTNode(parent, name, parseYamlBoolean(value), node.startPosition, node.endPosition)
 				}
 				case ScalarType.int: {
 					const result = new NumberASTNode(parent, name, node.startPosition, node.endPosition);
@@ -104,16 +106,55 @@ function recursivelyBuildAst(parent: ASTNode, node: Yaml.YAMLNode): ASTNode {
 	return undefined;
 }
 
-function parseYamlBool(input: String): boolean {
-	return true;
+export function parseYamlBoolean(input: string): boolean {
+	if (["true", "True", "TRUE"].lastIndexOf(input) >= 0) {
+		return true;
+	}
+	else if (["false", "False", "FALSE"].lastIndexOf(input) >= 0) {
+		return false;
+	}
+	throw `Invalid boolean "${input}"`
 }
 
-function parseYamlInteger(input: String): number {
-	return 0;
+function safeParseYamlInteger(input: string): number {
+
+	// Use startsWith when es6 methods becomes available
+	if (input.lastIndexOf('0o', 0) === 0) {
+		return parseInt(input.substring(2), 8)
+	}
+
+	return parseInt(input);
 }
 
-function parseYamlFloat(input: String): number {
-	return 0;
+export function parseYamlInteger(input: string): number {
+	const result = safeParseYamlInteger(input)
+
+	if (isNaN(result)) {
+		throw `Invalid integer "${input}"`
+	}
+
+	return result;
+}
+
+export function parseYamlFloat(input: string): number {
+
+	if ([".nan", ".NaN", ".NAN"].lastIndexOf(input) >= 0) {
+		return NaN;
+	}
+
+	const infinity = /^([-+])?(?:\.inf|\.Inf|\.INF)$/
+	const match = infinity.exec(input)
+	if (match) {
+		return (match[1] === '-') ? -Infinity : Infinity;
+	}
+
+	const result = parseFloat(input)
+
+	if (!isNaN(result)) {
+		return result;
+	}
+
+	throw `Invalid float "${input}"`
 }
 
 export enum ScalarType {
