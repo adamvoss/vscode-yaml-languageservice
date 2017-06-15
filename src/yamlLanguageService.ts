@@ -1,4 +1,5 @@
 /*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Adam Voss. All rights reserved.
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
@@ -7,16 +8,17 @@
 import {TextDocument, Position, CompletionItem, CompletionList, Hover, Range, SymbolInformation, Diagnostic,
 	TextEdit, FormattingOptions, MarkedString} from 'vscode-languageserver-types';
 
-import {JSONCompletion} from './services/jsonCompletion';
-import {JSONHover} from './services/jsonHover';
-import {JSONValidation} from './services/jsonValidation';
-import {JSONSchema} from './jsonSchema';
-import {JSONDocumentSymbols} from './services/jsonDocumentSymbols';
-import {parse as parseJSON, JSONDocumentConfig} from './parser/jsonParser';
-import {schemaContributions} from './services/configuration';
-import {JSONSchemaService} from './services/jsonSchemaService';
-import {JSONWorkerContribution, JSONPath, Segment, CompletionsCollector} from './jsonContributions';
-import {format as formatJSON} from './services/jsonFormatter';
+import {JSONCompletion} from '../vscode-json-languageservice/src/services/jsonCompletion';
+import {JSONHover} from '../vscode-json-languageservice/src/services/jsonHover';
+import {JSONValidation} from '../vscode-json-languageservice/src/services/jsonValidation';
+import {JSONSchema} from '../vscode-json-languageservice/src/jsonSchema';
+import {JSONDocumentSymbols} from '../vscode-json-languageservice/src/services/jsonDocumentSymbols';
+import {parse as JSONDocumentConfig} from '../vscode-json-languageservice/src/parser/jsonParser';
+import {parse as parseYAML} from './parser/yamlParser';
+import {schemaContributions} from '../vscode-json-languageservice/src/services/configuration';
+import {JSONSchemaService} from '../vscode-json-languageservice/src/services/jsonSchemaService';
+import {JSONWorkerContribution, JSONPath, Segment, CompletionsCollector} from '../vscode-json-languageservice/src/jsonContributions';
+import {format as formatJSON} from '../vscode-json-languageservice/src/services/jsonFormatter';
 
 export type JSONDocument = {};
 export {JSONSchema, JSONWorkerContribution, JSONPath, Segment, CompletionsCollector};
@@ -166,12 +168,12 @@ export function getLanguageService(params: LanguageServiceParams): LanguageServi
 		},
 		resetSchema: (uri: string) => jsonSchemaService.onResourceChange(uri),
 		doValidation: jsonValidation.doValidation.bind(jsonValidation),
-		parseJSONDocument: (document: TextDocument) => parseJSON(document.getText(), {disallowComments}),
+		parseJSONDocument: (document: TextDocument) => parseYAML(document.getText(), {disallowComments}),
 		doResolve: jsonCompletion.doResolve.bind(jsonCompletion),
 		doComplete: jsonCompletion.doComplete.bind(jsonCompletion),
 		findDocumentSymbols: jsonDocumentSymbols.findDocumentSymbols.bind(jsonDocumentSymbols),
 		findColorSymbols: jsonDocumentSymbols.findColorSymbols.bind(jsonDocumentSymbols),
 		doHover: jsonHover.doHover.bind(jsonHover),
-		format: formatJSON
+		format: function(a,b,c){return [];}// TODO: Format
 	};
 }
