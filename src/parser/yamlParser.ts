@@ -12,6 +12,10 @@ import { Kind } from 'yaml-ast-parser'
 
 function recursivelyBuildAst(parent: ASTNode, node: Yaml.YAMLNode): ASTNode {
 
+	if (!node) {
+		return;
+	}
+
 	switch (node.kind) {
 		case Yaml.Kind.MAP: {
 			const instance = <Yaml.YamlMap>node;
@@ -19,7 +23,6 @@ function recursivelyBuildAst(parent: ASTNode, node: Yaml.YAMLNode): ASTNode {
 			const result = new ObjectASTNode(parent, null, node.startPosition, node.endPosition)
 			result.addProperty
 
-			// TODO: Could watch for duplicate keys
 			for (const mapping of instance.mappings) {
 				result.addProperty(<PropertyASTNode>recursivelyBuildAst(result, mapping))
 			}
@@ -30,14 +33,15 @@ function recursivelyBuildAst(parent: ASTNode, node: Yaml.YAMLNode): ASTNode {
 			const instance = <Yaml.YAMLMapping>node;
 			const key = instance.key;
 
+			// Technically, this is an arbitrary node in YAML
+			// I doubt we would get a better string representation by parsing it
 			const keyNode = new StringASTNode(null, null, true, key.startPosition, key.endPosition);
 			keyNode.value = key.value;
 
-			// TODO: Could watch for duplicate properties
 			const result = new PropertyASTNode(parent, keyNode)
 			result.end = instance.endPosition
 
-			const valueNode = recursivelyBuildAst(result, instance.value)
+			const valueNode = (instance.value) ? recursivelyBuildAst(result, instance.value) : new NullASTNode(parent, key.value, instance.startPosition, instance.endPosition)
 			valueNode.location = key.value
 
 			result.setValue(valueNode)
@@ -47,7 +51,7 @@ function recursivelyBuildAst(parent: ASTNode, node: Yaml.YAMLNode): ASTNode {
 		case Yaml.Kind.SEQ: {
 			const instance = <Yaml.YAMLSequence>node;
 
-			const result = new ArrayASTNode(parent, instance.value, instance.startPosition, instance.endPosition);
+			const result = new ArrayASTNode(parent, null, instance.startPosition, instance.endPosition);
 
 			let count = 0;
 			for (const item of instance.items) {
@@ -84,7 +88,7 @@ function recursivelyBuildAst(parent: ASTNode, node: Yaml.YAMLNode): ASTNode {
 					const result = new NumberASTNode(parent, name, node.startPosition, node.endPosition);
 					result.value = parseYamlFloat(value);
 					result.isInteger = false;
-					break;
+					return result;
 				}
 				case ScalarType.string: {
 					const result = new StringASTNode(parent, name, false, node.startPosition, node.endPosition);
@@ -117,7 +121,6 @@ export function parseYamlBoolean(input: string): boolean {
 }
 
 function safeParseYamlInteger(input: string): number {
-
 	// Use startsWith when es6 methods becomes available
 	if (input.lastIndexOf('0o', 0) === 0) {
 		return parseInt(input.substring(2), 8)
@@ -201,7 +204,13 @@ export function determineScalarType(node: Yaml.YAMLScalar): ScalarType {
 	return ScalarType.string;
 }
 
+function convertError(e: Yaml.YAMLException) {
+	// Subtract 2 because \n\0 is added by the parser (see loader.ts/loadDocuments)
+	const bufferLength = e.mark.buffer.length - 2;
 
+	// TODO determine correct positioning.
+	return { message: `${e.message}`, location: { start: Math.min(e.mark.position, bufferLength - 1), end: bufferLength, code: ErrorCode.Undefined } }
+}
 
 export function parse(text: string, config?: JSONDocumentConfig): JSONDocument {
 
@@ -213,14 +222,17 @@ export function parse(text: string, config?: JSONDocumentConfig): JSONDocument {
 	_doc.root = recursivelyBuildAst(null, yamlDoc)
 
 	if (!_doc.root) {
+		// TODO: When this is true, consider not pushing the other errors.
 		_doc.errors.push({ message: localize('Invalid symbol', 'Expected a YAML object, array or literal'), code: ErrorCode.Undefined, location: { start: yamlDoc.startPosition, end: yamlDoc.endPosition } });
 	}
 
-	const errors = yamlDoc.errors.map(e => {
-		return { message: e.message, location: { start: e.mark.position, end: e.mark.position + e.mark.buffer.length }, code: ErrorCode.Undefined }
-	})
+	const duplicateKeyReason = 'duplicate key'
+
+	const errors = yamlDoc.errors.filter(e => e.reason !== duplicateKeyReason).map(e => convertError(e))
+	const warnings = yamlDoc.errors.filter(e => e.reason === duplicateKeyReason).map(e => convertError(e))
 
 	errors.forEach(e => _doc.errors.push(e));
+	warnings.forEach(e => _doc.warnings.push(e));
 
 	return _doc;
 }

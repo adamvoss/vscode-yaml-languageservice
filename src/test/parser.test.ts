@@ -13,66 +13,82 @@ import JsonSchema = require('../../vscode-json-languageservice/src/jsonSchema');
 
 suite('YAML Parser', () => {
 
+	var validExecCount = 1
+	var invalidExecCount = 1
+
 	function isValid(json: string): void {
+		const message = `isValid test number: ${validExecCount++}`
 		var result = YamlParser.parse(json);
-		assert.equal(result.errors.length + result.warnings.length, 0);
+		assert.equal(result.errors.length + result.warnings.length, 0, message);
 	}
 
 	function isInvalid(json: string, ...expectedErrors: Parser.ErrorCode[]): void {
+		const message = `isInvalid test number: ${invalidExecCount++}`
 		var result = YamlParser.parse(json);
 		if (expectedErrors.length === 0) {
-			assert.ok(result.errors.length > 0);
+			assert.ok(result.errors.length > 0, message);
 		} else {
-			assert.deepEqual(result.errors.map(e => e.code), expectedErrors);
+			assert.deepEqual(result.errors.map(e => e.code), expectedErrors, message);
 		}
 		// these should be caught by the parser, not the last-ditch guard
-		assert.notEqual(result.errors[0].message, 'Invalid JSON');
+		assert.notEqual(result.errors[0].message, 'Invalid JSON', message);
 	}
 
 
-	test('Invalid body', function() {
+	test('Invalid body', function () {
 		var result = YamlParser.parse('*');
-		assert.equal(result.errors.length, 1);
+
+		assert(result.errors.length >= 1);
 
 		isInvalid('{}[]');
 	});
 
-	test('Trailing Whitespace', function() {
+	test('Trailing Whitespace', function () {
 		isValid('{}\n\n');
 	});
 
 
-	test('Objects', function() {
+	test('Objects', function () {
 		isValid('{}');
 		isValid('{"key": "value"}');
 		isValid('{"key1": true, "key2": 3, "key3": [null], "key4": { "nested": {}}}');
 		isValid('{"constructor": true }');
 
 		isInvalid('{');
-		isInvalid('{3:3}');
-		isInvalid('{\'key\': 3}');
+		// Note this should be invalid, see: https://github.com/nodeca/js-yaml/issues/355
+		isValid('{3:3}');
+		isValid('{3: 3}');
+		isValid('{\'key\': 3}');
 		isInvalid('{"key" 3}');
 		isInvalid('{"key":3 "key2": 4}');
-		isInvalid('{"key":42, }');
+		isValid('{"key":42, }');
+		isValid('{"key": 42, }')
 		isInvalid('{"key:42');
+
+		isValid("key: value")
+		isValid("key: value\nk2: v2")
+		isInvalid("key: value\n k2: v2")
 	});
 
-	test('Arrays', function() {
+	test('Arrays', function () {
 		isValid('[]');
 		isValid('[1, 2]');
 		isValid('[1, "string", false, {}, [null]]');
 
 		isInvalid('[');
-		isInvalid('[,]');
-		isInvalid('[1 2]');
-		isInvalid('[true false]');
-		isInvalid('[1, ]');
+		isValid('[,]');
+		isValid('[1 2]');
+		isValid('[true false]');
+		isValid('[1, ]');
 		isInvalid('[[]');
 		isInvalid('["something"');
-		isInvalid('[magic]');
+		isValid('[magic]');
+
+		isValid(`- 1\n- 2\n- 3`)
+		isInvalid(`- 1\n-2\n- 3`)
 	});
 
-	test('Strings', function() {
+	test('Strings', function () {
 		isValid('["string"]');
 		isValid('["\\"\\\\\\/\\b\\f\\n\\r\\t\\u1234\\u12AB"]');
 		isValid('["\\\\"]');
@@ -83,23 +99,27 @@ suite('YAML Parser', () => {
 		isInvalid('["\\u"]');
 		isInvalid('["\\u123"]');
 		isInvalid('["\\u123Z"]');
-		isInvalid('[\'string\']');
-		isInvalid('"\tabc"', Parser.ErrorCode.InvalidCharacter);
+		isValid('[\'string\']');
+		isValid('"\tabc"');
+
+		isValid('abc');
+		isValid('ab\nc');
+		isValid('| \na: b');
 	});
 
-	test('Numbers', function() {
+	test('Numbers', function () {
 		isValid('[0, -1, 186.1, 0.123, -1.583e+4, 1.583E-4, 5e8]');
 
-		isInvalid('[+1]');
-		isInvalid('[01]');
-		isInvalid('[1.]');
-		isInvalid('[1.1+3]');
-		isInvalid('[1.4e]');
-		isInvalid('[-A]');
+		isValid('[+1]');
+		isValid('[01]');
+		isValid('[1.]');
+		 // Strings
+		isValid('[1.1+3]');
+		isValid('[1.4e]');
+		isValid('[-A]');
 	});
 
-	test('Simple AST', function() {
-
+	test('Simple AST', function () {
 		var result = YamlParser.parse('{}');
 
 		assert.strictEqual(result.errors.length, 0);
@@ -110,20 +130,16 @@ suite('YAML Parser', () => {
 		assert.deepEqual(node.getPath(), []);
 
 		assert.strictEqual(result.getNodeFromOffset(2), null);
-
 		result = YamlParser.parse('[null]');
 		assert.strictEqual(result.errors.length, 0);
 
 		node = result.getNodeFromOffset(2);
-
 		assert.equal(node.type, 'null');
 		assert.deepEqual(node.getPath(), [0]);
-
 		result = YamlParser.parse('{"a":true}');
 		assert.strictEqual(result.errors.length, 0);
 
 		node = result.getNodeFromOffset(3);
-
 		assert.equal(node.type, 'string');
 		assert.equal((<Parser.StringASTNode>node).isKey, true);
 		assert.deepEqual(node.getPath(), ['a']);
@@ -133,7 +149,6 @@ suite('YAML Parser', () => {
 		assert.equal(node.type, 'property');
 
 		node = result.getNodeFromOffset(0);
-
 		assert.equal(node.type, 'object');
 
 		node = result.getNodeFromOffset(10);
@@ -144,10 +159,9 @@ suite('YAML Parser', () => {
 
 		assert.equal(node.type, 'boolean');
 		assert.deepEqual(node.getPath(), ['a']);
-
 	});
 
-	test('Nested AST', function() {
+	test('Nested AST', function () {
 
 		var content = '{\n\t"key" : {\n\t"key2": 42\n\t}\n}';
 		var result = YamlParser.parse(content);
@@ -165,7 +179,7 @@ suite('YAML Parser', () => {
 		assert.deepEqual(location, ['key', 'key2']);
 	});
 
-	test('Nested AST in Array', function() {
+	test('Nested AST in Array', function () {
 
 		var result = YamlParser.parse('{"key":[{"key2":42}]}');
 
@@ -178,7 +192,7 @@ suite('YAML Parser', () => {
 
 	});
 
-	test('Multiline', function() {
+	test('Multiline', function () {
 
 		var content = '{\n\t\n}';
 		var result = YamlParser.parse(content);
@@ -199,25 +213,25 @@ suite('YAML Parser', () => {
 		assert.equal(node.type, 'boolean');
 	});
 
-	test('Expand errors to entire tokens', function() {
+	test('Expand errors to entire tokens', function () {
 
-		var content = '{\n"key":32,\nerror\n}';
+		var content = '{\n"key" 32,\nerror\n}';
 		var result = YamlParser.parse(content);
 		assert.equal(result.errors.length, 1);
-		assert.equal(result.errors[0].location.start, content.indexOf('error'));
-		assert.equal(result.errors[0].location.end, content.indexOf('error') + 5);
+		assert.equal(result.errors[0].location.start, content.indexOf('32'));
+		assert.equal(result.errors[0].location.end, content.length);
 	});
 
-	test('Errors at the end of the file', function() {
+	test('Errors at the end of the file', function () {
 
 		var content = '{\n"key":32\n ';
 		var result = YamlParser.parse(content);
-		assert.equal(result.errors.length, 1);
-		assert.equal(result.errors[0].location.start, 9);
-		assert.equal(result.errors[0].location.end, 10);
-	});	
+		assert(result.errors.length >= 1);
+		assert.equal(result.errors[0].location.start, 11);
+		assert.equal(result.errors[0].location.end, 12);
+	});
 
-	test('Getting keys out of an object', function() {
+	test('Getting keys out of an object', function () {
 
 		var content = '{\n"key":32,\n\n"key2":45}';
 		var result = YamlParser.parse(content);
@@ -229,7 +243,7 @@ suite('YAML Parser', () => {
 		assert.deepEqual(keyList, ['key', 'key2']);
 	});
 
-	test('Validate types', function() {
+	test('Validate types', function () {
 
 		var str = '{"number": 3.4, "integer": 42, "string": "some string", "boolean":true, "null":null, "object":{}, "array":[1, 2]}';
 		var result = YamlParser.parse(str);
@@ -365,7 +379,7 @@ suite('YAML Parser', () => {
 		assert.strictEqual(result.warnings.length, 2);
 	});
 
-	test('Required properties', function() {
+	test('Required properties', function () {
 
 		var result = YamlParser.parse('{"integer": 42, "string": "some string", "boolean":true}');
 
@@ -387,7 +401,7 @@ suite('YAML Parser', () => {
 		assert.strictEqual(result.warnings.length, 1);
 	});
 
-	test('Arrays', function() {
+	test('Arrays', function () {
 
 		var result = YamlParser.parse('[1, 2, 3]');
 
@@ -428,7 +442,7 @@ suite('YAML Parser', () => {
 
 	});
 
-	test('Strings', function() {
+	test('Strings', function () {
 
 		var result = YamlParser.parse('{"one":"test"}');
 
@@ -501,7 +515,7 @@ suite('YAML Parser', () => {
 
 	});
 
-	test('Numbers', function() {
+	test('Numbers', function () {
 
 		var result = YamlParser.parse('{"one": 13.45e+1}');
 
@@ -590,7 +604,7 @@ suite('YAML Parser', () => {
 		assert.strictEqual(result.warnings.length, 0, 'equal to min and max');
 	});
 
-	test('getNodeFromOffset', function() {
+	test('getNodeFromOffset', function () {
 		var content = '{"a": 1,\n\n"d": 2}';
 		var doc = YamlParser.parse(content);
 
@@ -602,25 +616,25 @@ suite('YAML Parser', () => {
 	});
 
 
-	test('Duplicate keys', function() {
+	test('Duplicate keys', function () {
 		var doc = YamlParser.parse('{"a": 1, "a": 2}');
 
 		assert.strictEqual(doc.errors.length, 0);
-		assert.strictEqual(doc.warnings.length, 1, 'Keys should not be the same');
+		assert(doc.warnings.length >= 1, 'Keys should not be the same');
 
 		var doc = YamlParser.parse('{"a": { "a": 2, "a": 3}}');
 
 		assert.strictEqual(doc.errors.length, 0);
-		assert.strictEqual(doc.warnings.length, 1, 'Keys should not be the same');
+		assert(doc.warnings.length >= 1, 'Keys should not be the same');
 
 		var doc = YamlParser.parse('[{ "a": 2, "a": 3}]');
 
 		assert.strictEqual(doc.errors.length, 0);
-		assert.strictEqual(doc.warnings.length, 1, 'Keys should not be the same');
+		assert(doc.warnings.length >= 1, 'Keys should not be the same');
 
 	});
 
-	test('allOf', function() {
+	test('allOf', function () {
 
 		var doc = YamlParser.parse('{"prop1": 42, "prop2": true}');
 
@@ -661,7 +675,7 @@ suite('YAML Parser', () => {
 		assert.strictEqual(doc.warnings.length, 1);
 	});
 
-	test('anyOf', function() {
+	test('anyOf', function () {
 
 		var doc = YamlParser.parse('{"prop1": 42, "prop2": true}');
 
@@ -706,7 +720,7 @@ suite('YAML Parser', () => {
 		assert.strictEqual(doc.warnings.length, 1);
 	});
 
-	test('oneOf', function() {
+	test('oneOf', function () {
 
 		var doc = YamlParser.parse('{"prop1": 42, "prop2": true}');
 
@@ -752,7 +766,7 @@ suite('YAML Parser', () => {
 	});
 
 
-	test('not', function() {
+	test('not', function () {
 
 		var doc = YamlParser.parse('{"prop1": 42, "prop2": true}');
 
@@ -781,7 +795,7 @@ suite('YAML Parser', () => {
 		assert.strictEqual(doc.warnings.length, 0);
 	});
 
-	test('minProperties', function() {
+	test('minProperties', function () {
 
 		var doc = YamlParser.parse('{"prop1": 42, "prop2": true}');
 
@@ -809,7 +823,7 @@ suite('YAML Parser', () => {
 		assert.strictEqual(doc.warnings.length, 1);
 	});
 
-	test('maxProperties', function() {
+	test('maxProperties', function () {
 
 		var doc = YamlParser.parse('{"prop1": 42, "prop2": true}');
 
@@ -837,7 +851,7 @@ suite('YAML Parser', () => {
 		assert.strictEqual(doc.warnings.length, 1);
 	});
 
-	test('patternProperties', function() {
+	test('patternProperties', function () {
 
 		var doc = YamlParser.parse('{"prop1": 42, "prop2": 42}');
 
@@ -870,7 +884,7 @@ suite('YAML Parser', () => {
 		assert.strictEqual(doc.warnings.length, 0);
 	});
 
-	test('additionalProperties', function() {
+	test('additionalProperties', function () {
 
 		var doc = YamlParser.parse('{"prop1": 42, "prop2": 42}');
 
@@ -934,7 +948,7 @@ suite('YAML Parser', () => {
 		assert.strictEqual(doc.warnings.length, 0);
 	});
 
-	test('enum', function() {
+	test('enum', function () {
 
 		var doc = YamlParser.parse('{"prop": "harmonica"}');
 
@@ -993,7 +1007,7 @@ suite('YAML Parser', () => {
 		assert.strictEqual(doc.warnings.length, 0);
 	});
 
-	test('uniqueItems', function() {
+	test('uniqueItems', function () {
 
 		var doc = YamlParser.parse('[1, 2, 3]');
 
@@ -1020,7 +1034,7 @@ suite('YAML Parser', () => {
 		assert.strictEqual(doc.warnings.length, 1);
 	});
 
-	test('items as array', function() {
+	test('items as array', function () {
 
 		var doc = YamlParser.parse('[1, true, "string"]');
 
@@ -1057,7 +1071,7 @@ suite('YAML Parser', () => {
 		assert.strictEqual(doc.warnings.length, 0);
 	});
 
-	test('additionalItems', function() {
+	test('additionalItems', function () {
 
 		var doc = YamlParser.parse('[1, true, "string"]');
 
@@ -1089,7 +1103,7 @@ suite('YAML Parser', () => {
 		assert.strictEqual(doc.warnings.length, 1);
 	});
 
-	test('multipleOf', function() {
+	test('multipleOf', function () {
 
 		var doc = YamlParser.parse('[42]');
 
@@ -1113,7 +1127,7 @@ suite('YAML Parser', () => {
 		assert.strictEqual(doc.warnings.length, 1);
 	});
 
-	test('dependencies with array', function() {
+	test('dependencies with array', function () {
 
 		var doc = YamlParser.parse('{"a":true, "b":42}');
 
@@ -1147,7 +1161,7 @@ suite('YAML Parser', () => {
 		assert.strictEqual(doc.warnings.length, 1);
 	});
 
-	test('dependencies with schema', function() {
+	test('dependencies with schema', function () {
 
 		var doc = YamlParser.parse('{"a":true, "b":42}');
 
@@ -1193,7 +1207,7 @@ suite('YAML Parser', () => {
 		assert.strictEqual(doc.warnings.length, 1);
 	});
 
-	test('type as array', function() {
+	test('type as array', function () {
 
 		var doc = YamlParser.parse('{"prop": 42}');
 
@@ -1224,7 +1238,7 @@ suite('YAML Parser', () => {
 		assert.strictEqual(doc.warnings.length, 1);
 	});
 
-	test('deprecated', function() {
+	test('deprecated', function () {
 
 		var doc = YamlParser.parse('{"prop": 42}');
 
@@ -1241,9 +1255,9 @@ suite('YAML Parser', () => {
 
 		assert.strictEqual(doc.errors.length, 0);
 		assert.strictEqual(doc.warnings.length, 1);
-	});	
+	});
 
-	test('Strings with spaces', function() {
+	test('Strings with spaces', function () {
 
 		var result = YamlParser.parse('{"key1":"first string", "key2":["second string"]}');
 		assert.strictEqual(result.errors.length, 0);
@@ -1256,7 +1270,7 @@ suite('YAML Parser', () => {
 
 	});
 
-	test('Schema information on node', function() {
+	test('Schema information on node', function () {
 
 		var result = YamlParser.parse('{"key":42}');
 		assert.strictEqual(result.errors.length, 0);
@@ -1269,9 +1283,9 @@ suite('YAML Parser', () => {
 						type: 'number',
 						description: 'this is a number'
 					}, {
-							type: 'string',
-							description: 'this is a string'
-						}]
+						type: 'string',
+						description: 'this is a string'
+					}]
 				}
 			}
 		};
@@ -1292,7 +1306,7 @@ suite('YAML Parser', () => {
 		assert.strictEqual(schemas[0].description, 'this is a number');
 	});
 
-	test('parse with comments', function() {
+	test('parse with comments', function () {
 
 		function parse<T>(v: string): T {
 			var result = YamlParser.parse(v);
@@ -1300,10 +1314,10 @@ suite('YAML Parser', () => {
 			return <T>result.root.getValue();
 		}
 
-		var value = parse<{ far: string; }>('// comment\n{\n"far": "boo"\n}');
+		var value = parse<{ far: string; }>('# comment\n{\n"far": "boo"\n}');
 		assert.equal(value.far, 'boo');
 
-		var value = parse<{ far: string; }>('/* comm\nent\nent */\n{\n"far": "boo"\n}');
+		var value = parse<{ far: string; }>('# comm\n#ent\n#ent \n{\n"far": "boo"\n}');
 		assert.equal(value.far, 'boo');
 
 		var value = parse<{ far: string; }>('{\n"far": "boo"\n}');
@@ -1311,16 +1325,16 @@ suite('YAML Parser', () => {
 
 	});
 
-	test('parse with comments disabled', function() {
-
+	test('parse with comments disabled', function () {
+		// This is testing that YAML does not support these comment types.
 		function assertParse(v: string, expectedErrors: number): void {
-			var result = YamlParser.parse(v, {disallowComments:true});
+			var result = YamlParser.parse(v, { disallowComments: true });
 			assert.equal(result.errors.length, expectedErrors);
 		}
 
-		assertParse('// comment\n{\n"far": "boo"\n}', 1);
-		assertParse('/* comm\nent\nent */\n{\n"far": "boo"\n}', 1);
+		assertParse('// comment\n{\n"far": "boo"\n}', 3);
+		assertParse('/* comm\nent\nent */\n{\n"far": "boo"\n}', 3);
 		assertParse('{\n"far": "boo"\n}', 0);
-	});	
+	});
 
 });
