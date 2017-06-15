@@ -6,6 +6,9 @@
   "typings": "./lib/src/jsonLanguageService",
   "author": "Adam Voss",
   "license": "MIT",
+  "repository": {
+    "url": "https://github.com/adamvoss/vscode-yaml-languageservice.git"
+  },
   "scripts": {
     "prepublish": "npm run compile",
     "compile": "tsc -p ./src",
@@ -14,10 +17,10 @@
     "install-types-next": "npm install vscode-languageserver-types@next -f -S"
   },
   "dependencies": {
-    "js-yaml": "^3.8.4",
     "jsonc-parser": "^1.0.0",
     "vscode-json-languageservice": "file:./vscode-json-languageservice",
-    "vscode-nls": "^2.0.2"
+    "vscode-nls": "^2.0.2",
+    "yaml-ast-parser": "0.0.33"
   },
   "devDependencies": {
     "@types/mocha": "^2.2.41",
