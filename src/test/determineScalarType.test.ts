@@ -29,6 +29,11 @@ suite('determineScalarType', () => {
         test('boolean', ScalarType.bool, ["true", "True", "TRUE", "false", "False", "FALSE"])
 
         test("null", ScalarType.null, ["null", "Null", "NULL", "~", ""])
+        _test("null as from an array", function () {
+            const node = Yaml.newScalar('');
+            node.plainScalar = true;
+            assert.strictEqual(determineScalarType(node), ScalarType.null, "unquoted empty string")
+        })
 
         test("integer", ScalarType.int, ["0", "0o7", "0x3A", "-19"])
 

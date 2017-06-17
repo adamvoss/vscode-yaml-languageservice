@@ -2,8 +2,6 @@
 
 import { JSONDocumentConfig, JSONDocument, ASTNode, ErrorCode, BooleanASTNode, NullASTNode, ArrayASTNode, NumberASTNode, ObjectASTNode, PropertyASTNode, StringASTNode } from '../../vscode-json-languageservice/src/parser/jsonParser';
 
-import Json = require('jsonc-parser');
-
 import * as nls from 'vscode-nls';
 const localize = nls.loadMessageBundle();
 
@@ -55,7 +53,14 @@ function recursivelyBuildAst(parent: ASTNode, node: Yaml.YAMLNode): ASTNode {
 
 			let count = 0;
 			for (const item of instance.items) {
-				const itemNode = recursivelyBuildAst(result, item);
+				if (item === null && count === instance.items.length - 1) {
+					break;
+				}
+
+				// Be aware of https://github.com/nodeca/js-yaml/issues/321
+				// Cannot simply work around it here because we need to know if we are in Flow or Block
+				var itemNode = (item === null) ? new NullASTNode(parent, null, instance.endPosition, instance.endPosition) : recursivelyBuildAst(result, item);
+
 				itemNode.location = count++;
 				result.addItem(itemNode);
 			}
@@ -102,12 +107,10 @@ function recursivelyBuildAst(parent: ASTNode, node: Yaml.YAMLNode): ASTNode {
 		case Yaml.Kind.INCLUDE_REF:
 		case Yaml.Kind.ANCHOR_REF: {
 			// Issue Warning
+			console.log("Unsupported feature, node kind: " + node.kind);
 			break;
 		}
 	}
-
-
-	return undefined;
 }
 
 export function parseYamlBoolean(input: string): boolean {
@@ -175,7 +178,7 @@ export function determineScalarType(node: Yaml.YAMLScalar): ScalarType {
 
 	const value = node.value;
 
-	if (["null", "Null", "NULL", "~"].indexOf(value) >= 0) {
+	if (["null", "Null", "NULL", "~", ''].indexOf(value) >= 0) {
 		return ScalarType.null;
 	}
 

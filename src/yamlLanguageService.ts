@@ -174,6 +174,8 @@ export function getLanguageService(params: LanguageServiceParams): LanguageServi
 		findDocumentSymbols: jsonDocumentSymbols.findDocumentSymbols.bind(jsonDocumentSymbols),
 		findColorSymbols: jsonDocumentSymbols.findColorSymbols.bind(jsonDocumentSymbols),
 		doHover: jsonHover.doHover.bind(jsonHover),
-		format: function(a,b,c){return [];}// TODO: Format
+		format: function(a,b,c){
+			console.log("formatting requested")
+			return [];}// TODO: Format
 	};
 }

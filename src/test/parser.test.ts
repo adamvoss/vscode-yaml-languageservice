@@ -85,6 +85,7 @@ suite('YAML Parser', () => {
 		isValid('[magic]');
 
 		isValid(`- 1\n- 2\n- 3`)
+		isValid(`- 1\n- 2\n-`)
 		isInvalid(`- 1\n-2\n- 3`)
 	});
 
@@ -160,6 +161,24 @@ suite('YAML Parser', () => {
 		assert.equal(node.type, 'boolean');
 		assert.deepEqual(node.getPath(), ['a']);
 	});
+
+	test('implicit null in array', function(){
+		let result = YamlParser.parse(`- 1\n- 2\n-\n- 4`);
+		assert.deepStrictEqual((<Parser.ArrayASTNode>result.root).items.map(x => x.getValue()), [1, 2, null, 4])
+
+		// NOTE: In the future we can hope this tests breaks
+		// https://github.com/nodeca/js-yaml/issues/321
+		result = YamlParser.parse(`[1,'',,4,]`);
+		assert.deepStrictEqual((<Parser.ArrayASTNode>result.root).items.map(x => x.getValue()), [1, '', null, 4])
+	})
+
+	test('implicit null in mapping', function(){
+		let result = YamlParser.parse(`{key,}`);
+		const properties = (<Parser.ObjectASTNode>result.root).properties
+		assert.strictEqual(properties.length, 1)
+		assert.strictEqual(properties[0].key.value, "key")
+		assert.strictEqual(properties[0].value.type, 'null')
+	})
 
 	test('Nested AST', function () {
 
@@ -440,6 +459,15 @@ suite('YAML Parser', () => {
 
 		assert.strictEqual(result.warnings.length, 1);
 
+		result = YamlParser.parse('- 1\n- 2\n- 3')
+		result.validate({
+			type: 'array',
+			items: {
+				type: 'number'
+			},
+			maxItems: 3
+		});
+		assert.strictEqual(result.warnings.length, 0)
 	});
 
 	test('Strings', function () {
