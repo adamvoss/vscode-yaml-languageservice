@@ -1,0 +1,9 @@
+language: node_js
+dist: trusty
+sudo: false
+
+node_js:
+  - "6"
+
+before_install:
+  - ./npminstall.sh
