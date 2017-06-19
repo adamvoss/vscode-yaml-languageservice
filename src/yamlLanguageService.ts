@@ -38,7 +38,7 @@ export interface LanguageService {
 	findDocumentSymbols(document: TextDocument, doc: JSONDocument): SymbolInformation[];
 	findColorSymbols(document: TextDocument, doc: JSONDocument): Thenable<Range[]>;
 	doHover(document: TextDocument, position: Position, doc: JSONDocument): Thenable<Hover>;
-	format(document: TextDocument, range: Range, options: FormattingOptions): TextEdit[];
+	format(document: TextDocument, options: FormattingOptions): TextEdit[];
 }
 
 export interface LanguageSettings {

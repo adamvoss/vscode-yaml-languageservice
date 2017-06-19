@@ -3,7 +3,7 @@
 import jsyaml = require('js-yaml')
 import { TextDocument, Range, Position, FormattingOptions, TextEdit } from 'vscode-languageserver-types';
 
-export function format(document: TextDocument, range: Range, options: FormattingOptions): TextEdit[] {
+export function format(document: TextDocument, options: FormattingOptions): TextEdit[] {
     const text = document.getText()
 
     const yaml = jsyaml.load(text)
