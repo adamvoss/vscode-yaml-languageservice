@@ -8,6 +8,136 @@ const localize = nls.loadMessageBundle();
 import * as Yaml from 'yaml-ast-parser'
 import { Kind } from 'yaml-ast-parser'
 
+import { getLineStartPositions, getPosition } from '../documentPositionCalculator'
+
+export class YAMLDocument extends JSONDocument {
+	private lines;
+
+	constructor(config: JSONDocumentConfig, lines: number[]) {
+		super(config);
+		this.lines = lines;
+	}
+
+	// TODO: This is complicated, messy and probably buggy
+	// It should be re-written.
+	// To get the correct behavior, it probably needs to be aware of
+	// the type of the nodes it is processing since there are no delimiters
+	// like in JSON. (ie. so it correctly returns 'object' vs 'property')
+	public getNodeFromOffsetEndInclusive(offset: number): ASTNode {
+		if (!this.root) {
+			return;
+		}
+		if (offset < this.root.start || offset > this.root.end) {
+			// We somehow are completely outside the document
+			// This is unexpected
+			console.log("Attempting to resolve node outside of document")
+			return null;
+		}
+
+		const children = this.root.getChildNodes()
+
+		function* sliding2(nodes: ASTNode[]) {
+			var i = 0;
+			while (i < nodes.length) {
+				yield [nodes[i], (i === nodes.length) ? null : nodes[i + 1]]
+				i++;
+			}
+		}
+
+		const onLaterLine = (offset: number, node: ASTNode) => {
+			const { line: actualLine } = getPosition(offset, this.lines)
+			const { line: nodeEndLine } = getPosition(node.end, this.lines)
+
+			return actualLine > nodeEndLine;
+		}
+
+		let findNode = (nodes: ASTNode[]): ASTNode => {
+			if (nodes.length === 0) {
+				return null;
+			}
+
+			var gen = sliding2(nodes);
+
+			let result: IteratorResult<ASTNode[]> = { done: false, value: undefined }
+
+			for (let [first, second] of gen) {
+				const end = (second) ? second.start : first.parent.end
+				if (offset >= first.start && offset < end) {
+					const children = first.getChildNodes();
+
+					const foundChild = findNode(children)
+
+					if (foundChild) {
+						if (foundChild['isKey'] && foundChild.end < offset) {
+							return foundChild.parent;
+						}
+
+						if (foundChild.type === "null") {
+							return null;
+						}
+					}
+
+					if (!foundChild && onLaterLine(offset, first)) {
+						return this.getNodeByIndent(this.lines, offset, this.root)
+					}
+
+					return foundChild || first;
+				}
+			}
+
+			return null;
+		}
+
+		return findNode(children) || this.root;
+	}
+
+	public getNodeFromOffset(offset: number): ASTNode {
+		return this.getNodeFromOffsetEndInclusive(offset);
+	}
+
+	private getNodeByIndent = (lines: number[], offset: number, node: ASTNode) => {
+
+		const { line, column: indent } = getPosition(offset, this.lines)
+
+		const children = node.getChildNodes()
+
+		function findNode(children) {
+			for (var idx = 0; idx < children.length; idx++) {
+				var child = children[idx];
+
+				const { line: childLine, column: childCol } = getPosition(child.start, lines);
+
+				if (childCol > indent) {
+					return null;
+				}
+
+				const newChildren = child.getChildNodes()
+				const foundNode = findNode(newChildren)
+
+				if (foundNode) {
+					return foundNode;
+				}
+
+				// We have the right indentation, need to return based on line
+				if (childLine == line) {
+					return child;
+				}
+				if (childLine > line) {
+					// Get previous
+					(idx - 1) >= 0 ? children[idx - 1] : child;
+				}
+				// Else continue loop to try next element
+			}
+
+			// Special case, we found the correct
+			return children[children.length - 1]
+		}
+
+		return findNode(children) || node
+	}
+}
+
+
 function recursivelyBuildAst(parent: ASTNode, node: Yaml.YAMLNode): ASTNode {
 
 	if (!node) {
@@ -39,7 +169,7 @@ function recursivelyBuildAst(parent: ASTNode, node: Yaml.YAMLNode): ASTNode {
 			const result = new PropertyASTNode(parent, keyNode)
 			result.end = instance.endPosition
 
-			const valueNode = (instance.value) ? recursivelyBuildAst(result, instance.value) : new NullASTNode(parent, key.value, instance.startPosition, instance.endPosition)
+			const valueNode = (instance.value) ? recursivelyBuildAst(result, instance.value) : new NullASTNode(parent, key.value, instance.endPosition, instance.endPosition)
 			valueNode.location = key.value
 
 			result.setValue(valueNode)
@@ -217,7 +347,8 @@ function convertError(e: Yaml.YAMLException) {
 
 export function parse(text: string, config?: JSONDocumentConfig): JSONDocument {
 
-	let _doc = new JSONDocument(config);
+	const startPositions = getLineStartPositions(text)
+	let _doc = new YAMLDocument(config, startPositions);
 	// This is documented to return a YAMLNode even though the
 	// typing only returns a YAMLDocument
 	const yamlDoc = <Yaml.YAMLNode>Yaml.safeLoad(text, {})

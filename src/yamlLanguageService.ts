@@ -14,7 +14,10 @@ import {JSONValidation} from '../vscode-json-languageservice/src/services/jsonVa
 import {JSONSchema} from '../vscode-json-languageservice/src/jsonSchema';
 import {JSONDocumentSymbols} from '../vscode-json-languageservice/src/services/jsonDocumentSymbols';
 import {parse as JSONDocumentConfig} from '../vscode-json-languageservice/src/parser/jsonParser';
+
 import {parse as parseYAML} from './parser/yamlParser';
+import {isInComment} from './services/yamlCompletion'
+
 import {schemaContributions} from '../vscode-json-languageservice/src/services/configuration';
 import {JSONSchemaService} from '../vscode-json-languageservice/src/services/jsonSchemaService';
 import {JSONWorkerContribution, JSONPath, Segment, CompletionsCollector} from '../vscode-json-languageservice/src/jsonContributions';
@@ -150,6 +153,8 @@ export function getLanguageService(params: LanguageServiceParams): LanguageServi
 	jsonSchemaService.setSchemaContributions(schemaContributions);
 
 	let jsonCompletion = new JSONCompletion(jsonSchemaService, params.contributions, promise);
+	jsonCompletion['isInComment'] = isInComment.bind(jsonCompletion);
+
 	let jsonHover = new JSONHover(jsonSchemaService, params.contributions, promise);
 	let jsonDocumentSymbols = new JSONDocumentSymbols(jsonSchemaService);
 	let jsonValidation = new JSONValidation(jsonSchemaService, promise);

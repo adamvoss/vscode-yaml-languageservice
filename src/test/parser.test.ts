@@ -114,7 +114,7 @@ suite('YAML Parser', () => {
 		isValid('[+1]');
 		isValid('[01]');
 		isValid('[1.]');
-		 // Strings
+		// Strings
 		isValid('[1.1+3]');
 		isValid('[1.4e]');
 		isValid('[-A]');
@@ -162,7 +162,7 @@ suite('YAML Parser', () => {
 		assert.deepEqual(node.getPath(), ['a']);
 	});
 
-	test('implicit null in array', function(){
+	test('implicit null in array', function () {
 		let result = YamlParser.parse(`- 1\n- 2\n-\n- 4`);
 		assert.deepStrictEqual((<Parser.ArrayASTNode>result.root).items.map(x => x.getValue()), [1, 2, null, 4])
 
@@ -172,7 +172,7 @@ suite('YAML Parser', () => {
 		assert.deepStrictEqual((<Parser.ArrayASTNode>result.root).items.map(x => x.getValue()), [1, '', null, 4])
 	})
 
-	test('implicit null in mapping', function(){
+	test('implicit null in mapping', function () {
 		let result = YamlParser.parse(`{key,}`);
 		const properties = (<Parser.ObjectASTNode>result.root).properties
 		assert.strictEqual(properties.length, 1)
