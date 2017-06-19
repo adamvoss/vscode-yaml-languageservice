@@ -17,11 +17,11 @@ import {parse as JSONDocumentConfig} from '../vscode-json-languageservice/src/pa
 
 import {parse as parseYAML} from './parser/yamlParser';
 import {isInComment} from './services/yamlCompletion'
+import {format as formatYAML} from './services/yamlFormatter';
 
 import {schemaContributions} from '../vscode-json-languageservice/src/services/configuration';
 import {JSONSchemaService} from '../vscode-json-languageservice/src/services/jsonSchemaService';
 import {JSONWorkerContribution, JSONPath, Segment, CompletionsCollector} from '../vscode-json-languageservice/src/jsonContributions';
-import {format as formatJSON} from '../vscode-json-languageservice/src/services/jsonFormatter';
 
 export type JSONDocument = {};
 export {JSONSchema, JSONWorkerContribution, JSONPath, Segment, CompletionsCollector};
@@ -46,10 +46,7 @@ export interface LanguageSettings {
 	 * If set, the validator will return syntax errors.
 	 */
 	validate?: boolean;
-	/**
-	 * If set, comments are toleranted. If not set, a syntax error is emmited for comments.
-	 */
-	allowComments?: boolean,
+
 	/**
 	 * A list of known schemas and/or associations of schemas to file names.
 	 */
@@ -159,7 +156,6 @@ export function getLanguageService(params: LanguageServiceParams): LanguageServi
 	let jsonDocumentSymbols = new JSONDocumentSymbols(jsonSchemaService);
 	let jsonValidation = new JSONValidation(jsonSchemaService, promise);
 
-	let disallowComments = false;
 	return {
 		configure: (settings: LanguageSettings) => {
 			jsonSchemaService.clearExternalSchemas();
@@ -169,18 +165,15 @@ export function getLanguageService(params: LanguageServiceParams): LanguageServi
 				});
 			};
 			jsonValidation.configure(settings);
-			disallowComments = settings && !settings.allowComments;
 		},
 		resetSchema: (uri: string) => jsonSchemaService.onResourceChange(uri),
 		doValidation: jsonValidation.doValidation.bind(jsonValidation),
-		parseJSONDocument: (document: TextDocument) => parseYAML(document.getText(), {disallowComments}),
+		parseJSONDocument: (document: TextDocument) => parseYAML(document.getText()),
 		doResolve: jsonCompletion.doResolve.bind(jsonCompletion),
 		doComplete: jsonCompletion.doComplete.bind(jsonCompletion),
 		findDocumentSymbols: jsonDocumentSymbols.findDocumentSymbols.bind(jsonDocumentSymbols),
 		findColorSymbols: jsonDocumentSymbols.findColorSymbols.bind(jsonDocumentSymbols),
 		doHover: jsonHover.doHover.bind(jsonHover),
-		format: function(a,b,c){
-			console.log("formatting requested")
-			return [];}// TODO: Format
+		format: formatYAML
 	};
 }

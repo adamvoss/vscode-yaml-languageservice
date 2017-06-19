@@ -1356,7 +1356,7 @@ suite('YAML Parser', () => {
 	test('parse with comments disabled', function () {
 		// This is testing that YAML does not support these comment types.
 		function assertParse(v: string, expectedErrors: number): void {
-			var result = YamlParser.parse(v, { disallowComments: true });
+			var result = YamlParser.parse(v);
 			assert.equal(result.errors.length, expectedErrors);
 		}
 

@@ -17,12 +17,14 @@
     "install-types-next": "npm install vscode-languageserver-types@next -f -S"
   },
   "dependencies": {
+    "js-yaml": "^3.8.4",
     "jsonc-parser": "^1.0.0",
     "vscode-json-languageservice": "file:./vscode-json-languageservice",
     "vscode-nls": "^2.0.2",
     "yaml-ast-parser": "0.0.33"
   },
   "devDependencies": {
+    "@types/js-yaml": "^3.5.31",
     "@types/mocha": "^2.2.41",
     "@types/node": "^7.0.31",
     "mocha": "^3.4.2",

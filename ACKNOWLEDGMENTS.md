@@ -11,3 +11,6 @@ Many of the behavioral aspects of this project are powered by [**vscode-json-lan
 
 ## License notice for yaml-ast-parser
 Parsing of YAML files is accomplished using [**yaml-ast-parser**](https://github.com/mulesoft-labs/yaml-ast-parser) which is copyright MuleSoft, Inc. and licensed under the [Apache License, Version 2.0](https://github.com/mulesoft-labs/yaml-ast-parser/blob/master/license.txt).
+
+## License notice for js-yaml
+**js-yaml** provides the formatting capabilities.  js-yaml is copyright Vitaly Puzrin and licensed under the [MIT license](https://github.com/nodeca/js-yaml/blob/master/LICENSE).

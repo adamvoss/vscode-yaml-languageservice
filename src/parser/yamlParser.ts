@@ -1,6 +1,6 @@
 'use strict';
 
-import { JSONDocumentConfig, JSONDocument, ASTNode, ErrorCode, BooleanASTNode, NullASTNode, ArrayASTNode, NumberASTNode, ObjectASTNode, PropertyASTNode, StringASTNode } from '../../vscode-json-languageservice/src/parser/jsonParser';
+import { JSONDocument, ASTNode, ErrorCode, BooleanASTNode, NullASTNode, ArrayASTNode, NumberASTNode, ObjectASTNode, PropertyASTNode, StringASTNode } from '../../vscode-json-languageservice/src/parser/jsonParser';
 
 import * as nls from 'vscode-nls';
 const localize = nls.loadMessageBundle();
@@ -13,8 +13,8 @@ import { getLineStartPositions, getPosition } from '../documentPositionCalculato
 export class YAMLDocument extends JSONDocument {
 	private lines;
 
-	constructor(config: JSONDocumentConfig, lines: number[]) {
-		super(config);
+	constructor(lines: number[]) {
+		super({disallowComments: false, ignoreDanglingComma: true});
 		this.lines = lines;
 	}
 
@@ -345,10 +345,10 @@ function convertError(e: Yaml.YAMLException) {
 	return { message: `${e.message}`, location: { start: Math.min(e.mark.position, bufferLength - 1), end: bufferLength, code: ErrorCode.Undefined } }
 }
 
-export function parse(text: string, config?: JSONDocumentConfig): JSONDocument {
+export function parse(text: string): JSONDocument {
 
 	const startPositions = getLineStartPositions(text)
-	let _doc = new YAMLDocument(config, startPositions);
+	let _doc = new YAMLDocument(startPositions);
 	// This is documented to return a YAMLNode even though the
 	// typing only returns a YAMLDocument
 	const yamlDoc = <Yaml.YAMLNode>Yaml.safeLoad(text, {})
