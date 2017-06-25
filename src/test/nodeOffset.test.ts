@@ -5,13 +5,11 @@ import YamlParser = require('../parser/yamlParser');
 
 
 suite("Get Node from Offset", () => {
-    test.only('End Inclusive', () => {
+    test('End Inclusive', () => {
         const str = `outer: 
   inner: 
     `
         const document = YamlParser.parse(str)
-
-        console.log(document.root['properties'])
 
         let assertionCount = 1;
 
