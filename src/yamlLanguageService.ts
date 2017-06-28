@@ -23,21 +23,21 @@ import {schemaContributions} from '../vscode-json-languageservice/src/services/c
 import {JSONSchemaService} from '../vscode-json-languageservice/src/services/jsonSchemaService';
 import {JSONWorkerContribution, JSONPath, Segment, CompletionsCollector} from '../vscode-json-languageservice/src/jsonContributions';
 
-export type JSONDocument = {};
+export type YAMLDocument = {};
 export {JSONSchema, JSONWorkerContribution, JSONPath, Segment, CompletionsCollector};
 export {TextDocument, Position, CompletionItem, CompletionList, Hover, Range, SymbolInformation, Diagnostic,
 	TextEdit, FormattingOptions, MarkedString};
 
 export interface LanguageService {
 	configure(settings: LanguageSettings): void;
-	doValidation(document: TextDocument, jsonDocument: JSONDocument): Thenable<Diagnostic[]>;
-	parseJSONDocument(document: TextDocument): JSONDocument;
+	doValidation(document: TextDocument, yamlDocument: YAMLDocument): Thenable<Diagnostic[]>;
+	parseYAMLDocument(document: TextDocument): YAMLDocument;
 	resetSchema(uri: string): boolean;
 	doResolve(item: CompletionItem): Thenable<CompletionItem>;
-	doComplete(document: TextDocument, position: Position, doc: JSONDocument): Thenable<CompletionList>;
-	findDocumentSymbols(document: TextDocument, doc: JSONDocument): SymbolInformation[];
-	findColorSymbols(document: TextDocument, doc: JSONDocument): Thenable<Range[]>;
-	doHover(document: TextDocument, position: Position, doc: JSONDocument): Thenable<Hover>;
+	doComplete(document: TextDocument, position: Position, doc: YAMLDocument): Thenable<CompletionList>;
+	findDocumentSymbols(document: TextDocument, doc: YAMLDocument): SymbolInformation[];
+	findColorSymbols(document: TextDocument, doc: YAMLDocument): Thenable<Range[]>;
+	doHover(document: TextDocument, position: Position, doc: YAMLDocument): Thenable<Hover>;
 	format(document: TextDocument, options: FormattingOptions): TextEdit[];
 }
 
@@ -168,7 +168,7 @@ export function getLanguageService(params: LanguageServiceParams): LanguageServi
 		},
 		resetSchema: (uri: string) => jsonSchemaService.onResourceChange(uri),
 		doValidation: jsonValidation.doValidation.bind(jsonValidation),
-		parseJSONDocument: (document: TextDocument) => parseYAML(document.getText()),
+		parseYAMLDocument : (document: TextDocument) => parseYAML(document.getText()),
 		doResolve: jsonCompletion.doResolve.bind(jsonCompletion),
 		doComplete: jsonCompletion.doComplete.bind(jsonCompletion),
 		findDocumentSymbols: jsonDocumentSymbols.findDocumentSymbols.bind(jsonDocumentSymbols),
