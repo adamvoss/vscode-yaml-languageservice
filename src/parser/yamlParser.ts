@@ -256,14 +256,8 @@ function convertError(e: Yaml.YAMLException) {
 	return { message: `${e.message}`, location: { start: Math.min(e.mark.position, bufferLength - 1), end: bufferLength, code: ErrorCode.Undefined } }
 }
 
-export function parse(text: string): JSONDocument {
-
-	const startPositions = getLineStartPositions(text)
+function createJSONDocument(yamlDoc: Yaml.YAMLNode, startPositions: number[]){
 	let _doc = new YAMLDocument(startPositions);
-	// This is documented to return a YAMLNode even though the
-	// typing only returns a YAMLDocument
-	const yamlDoc = <Yaml.YAMLNode>Yaml.safeLoad(text, {})
-
 	_doc.root = recursivelyBuildAst(null, yamlDoc)
 
 	if (!_doc.root) {
@@ -280,4 +274,14 @@ export function parse(text: string): JSONDocument {
 	warnings.forEach(e => _doc.warnings.push(e));
 
 	return _doc;
+}
+
+export function parse(text: string): JSONDocument {
+
+	const startPositions = getLineStartPositions(text)
+	// This is documented to return a YAMLNode even though the
+	// typing only returns a YAMLDocument
+    const yamlDoc = <Yaml.YAMLNode>Yaml.safeLoad(text, {})
+
+	return createJSONDocument(yamlDoc, startPositions);
 }
