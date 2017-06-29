@@ -23,7 +23,8 @@ import {schemaContributions} from '../vscode-json-languageservice/src/services/c
 import {JSONSchemaService} from '../vscode-json-languageservice/src/services/jsonSchemaService';
 import {JSONWorkerContribution, JSONPath, Segment, CompletionsCollector} from '../vscode-json-languageservice/src/jsonContributions';
 
-export type YAMLDocument = {};
+export type JSONDocument = {}
+export type YAMLDocument = { documents: JSONDocument[]}
 export {JSONSchema, JSONWorkerContribution, JSONPath, Segment, CompletionsCollector};
 export {TextDocument, Position, CompletionItem, CompletionList, Hover, Range, SymbolInformation, Diagnostic,
 	TextEdit, FormattingOptions, MarkedString};
@@ -156,6 +157,15 @@ export function getLanguageService(params: LanguageServiceParams): LanguageServi
 	let jsonDocumentSymbols = new JSONDocumentSymbols(jsonSchemaService);
 	let jsonValidation = new JSONValidation(jsonSchemaService, promise);
 
+
+	function doValidation(textDocument: TextDocument, yamlDocument: YAMLDocument) {
+		var validate: (JSONDocument) => Thenable<Diagnostic[]> =
+			jsonValidation.doValidation.bind(jsonValidation, textDocument)
+		const validationResults = yamlDocument.documents.map(d => validate(d))
+		const resultsPromise = promise.all(validationResults);
+		return resultsPromise.then(res => (<Diagnostic[]>[]).concat(...res))
+	}
+
 	return {
 		configure: (settings: LanguageSettings) => {
 			jsonSchemaService.clearExternalSchemas();
@@ -167,7 +177,7 @@ export function getLanguageService(params: LanguageServiceParams): LanguageServi
 			jsonValidation.configure(settings);
 		},
 		resetSchema: (uri: string) => jsonSchemaService.onResourceChange(uri),
-		doValidation: jsonValidation.doValidation.bind(jsonValidation),
+		doValidation: doValidation,
 		parseYAMLDocument : (document: TextDocument) => parseYAML(document.getText()),
 		doResolve: jsonCompletion.doResolve.bind(jsonCompletion),
 		doComplete: jsonCompletion.doComplete.bind(jsonCompletion),

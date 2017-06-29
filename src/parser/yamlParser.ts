@@ -1,6 +1,7 @@
 'use strict';
 
-import { JSONDocument, ASTNode, ErrorCode, BooleanASTNode, NullASTNode, ArrayASTNode, NumberASTNode, ObjectASTNode, PropertyASTNode, StringASTNode } from '../../vscode-json-languageservice/src/parser/jsonParser';
+import { JSONDocument, ASTNode, ErrorCode, BooleanASTNode, NullASTNode, ArrayASTNode, NumberASTNode, ObjectASTNode, PropertyASTNode, StringASTNode, IError, IApplicableSchema } from '../../vscode-json-languageservice/src/parser/jsonParser';
+import { JSONSchema } from '../../vscode-json-languageservice/src/jsonSchema';
 
 import * as nls from 'vscode-nls';
 const localize = nls.loadMessageBundle();
@@ -10,7 +11,7 @@ import { Kind } from 'yaml-ast-parser'
 
 import { getLineStartPositions, getPosition } from '../documentPositionCalculator'
 
-export class YAMLDocument extends JSONDocument {
+export class SingleYAMLDocument extends JSONDocument {
 	private lines;
 
 	constructor(lines: number[]) {
@@ -257,7 +258,7 @@ function convertError(e: Yaml.YAMLException) {
 }
 
 function createJSONDocument(yamlDoc: Yaml.YAMLNode, startPositions: number[]){
-	let _doc = new YAMLDocument(startPositions);
+	let _doc = new SingleYAMLDocument(startPositions);
 	_doc.root = recursivelyBuildAst(null, yamlDoc)
 
 	if (!_doc.root) {
@@ -276,12 +277,46 @@ function createJSONDocument(yamlDoc: Yaml.YAMLNode, startPositions: number[]){
 	return _doc;
 }
 
-export function parse(text: string): JSONDocument {
+export class YAMLDocument {
+	public documents: JSONDocument[]
+
+	constructor(documents: JSONDocument[]){
+		this.documents = documents;
+	}
+
+	get errors(): IError[]{
+		return (<IError[]>[]).concat(...this.documents.map(d => d.errors))
+	}
+
+	get warnings(): IError[]{
+		return (<IError[]>[]).concat(...this.documents.map(d => d.warnings))
+	}
+
+	public getNodeFromOffset(offset: number): ASTNode {
+		// Depends on the documents being sorted
+		for (let element of this.documents) {
+			if (offset <= element.root.end) {
+				return element.getNodeFromOffset(offset)
+			}
+		}
+
+		return undefined;
+	}
+
+	public validate(schema: JSONSchema, matchingSchemas: IApplicableSchema[] = null, offset: number = -1): void {
+		this.documents.forEach(doc => {
+			doc.validate(schema, matchingSchemas, offset)
+		});
+	}
+}
+
+export function parse(text: string): YAMLDocument {
 
 	const startPositions = getLineStartPositions(text)
 	// This is documented to return a YAMLNode even though the
 	// typing only returns a YAMLDocument
-    const yamlDoc = <Yaml.YAMLNode>Yaml.safeLoad(text, {})
+	const yamlDocs = []
+	Yaml.loadAll(text, doc => yamlDocs.push(doc), {})
 
-	return createJSONDocument(yamlDoc, startPositions);
+	return new YAMLDocument(yamlDocs.map(doc => createJSONDocument(doc, startPositions)));
 }

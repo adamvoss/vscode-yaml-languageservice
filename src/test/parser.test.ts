@@ -163,17 +163,17 @@ suite('YAML Parser', () => {
 	});
 
 	test('implicit null in array', function () {
-		let result = YamlParser.parse(`- 1\n- 2\n-\n- 4`);
+		let result = YamlParser.parse(`- 1\n- 2\n-\n- 4`).documents[0];
 		assert.deepStrictEqual((<Parser.ArrayASTNode>result.root).items.map(x => x.getValue()), [1, 2, null, 4])
 
 		// NOTE: In the future we can hope this tests breaks
 		// https://github.com/nodeca/js-yaml/issues/321
-		result = YamlParser.parse(`[1,'',,4,]`);
+		result = YamlParser.parse(`[1,'',,4,]`).documents[0];
 		assert.deepStrictEqual((<Parser.ArrayASTNode>result.root).items.map(x => x.getValue()), [1, '', null, 4])
 	})
 
 	test('implicit null in mapping', function () {
-		let result = YamlParser.parse(`{key,}`);
+		let result = YamlParser.parse(`{key,}`).documents[0];
 		const properties = (<Parser.ObjectASTNode>result.root).properties
 		assert.strictEqual(properties.length, 1)
 		assert.strictEqual(properties[0].key.value, "key")
@@ -183,7 +183,7 @@ suite('YAML Parser', () => {
 	test('Nested AST', function () {
 
 		var content = '{\n\t"key" : {\n\t"key2": 42\n\t}\n}';
-		var result = YamlParser.parse(content);
+		var result = YamlParser.parse(content).documents[0];
 
 		assert.strictEqual(result.errors.length, 0);
 
@@ -200,7 +200,7 @@ suite('YAML Parser', () => {
 
 	test('Nested AST in Array', function () {
 
-		var result = YamlParser.parse('{"key":[{"key2":42}]}');
+		var result = YamlParser.parse('{"key":[{"key2":42}]}').documents[0];
 
 		assert.strictEqual(result.errors.length, 0);
 
@@ -214,7 +214,7 @@ suite('YAML Parser', () => {
 	test('Multiline', function () {
 
 		var content = '{\n\t\n}';
-		var result = YamlParser.parse(content);
+		var result = YamlParser.parse(content).documents[0];
 
 		assert.strictEqual(result.errors.length, 0);
 
@@ -223,7 +223,7 @@ suite('YAML Parser', () => {
 		assert.notEqual(node, null);
 
 		content = '{\n"first":true\n\n}';
-		result = YamlParser.parse(content);
+		result = YamlParser.parse(content).documents[0];
 
 		node = result.getNodeFromOffset(content.length - 2);
 		assert.equal(node.type, /*'object'*/ 'property');
@@ -235,7 +235,7 @@ suite('YAML Parser', () => {
 	test('Expand errors to entire tokens', function () {
 
 		var content = '{\n"key" 32,\nerror\n}';
-		var result = YamlParser.parse(content);
+		var result = YamlParser.parse(content).documents[0];
 		assert.equal(result.errors.length, 1);
 		assert.equal(result.errors[0].location.start, content.indexOf('32'));
 		assert.equal(result.errors[0].location.end, content.length);
@@ -1337,7 +1337,7 @@ suite('YAML Parser', () => {
 	test('parse with comments', function () {
 
 		function parse<T>(v: string): T {
-			var result = YamlParser.parse(v);
+			var result = YamlParser.parse(v).documents[0];
 			assert.equal(result.errors.length, 0);
 			return <T>result.root.getValue();
 		}
@@ -1360,8 +1360,8 @@ suite('YAML Parser', () => {
 			assert.equal(result.errors.length, expectedErrors);
 		}
 
-		assertParse('// comment\n{\n"far": "boo"\n}', 3);
-		assertParse('/* comm\nent\nent */\n{\n"far": "boo"\n}', 3);
+		assertParse('// comment\n{\n"far": "boo"\n}', 4);
+		assertParse('/* comm\nent\nent */\n{\n"far": "boo"\n}', 4);
 		assertParse('{\n"far": "boo"\n}', 0);
 	});
 
@@ -1369,10 +1369,10 @@ suite('YAML Parser', () => {
 		test('expands reference', function () {
 			isValid('- foo: &ref 5\n- bar: *ref')
 
-			const result = YamlParser.parse('- foo: &ref 5\n- bar: *ref').root
-			const expected = YamlParser.parse('- foo:     5\n- bar:    5').root
+			const actualValues = YamlParser.parse('- foo: &ref 5\n- bar: *ref').documents.map(d => d.root.getValue())
+			const expectedValues = YamlParser.parse('- foo:     5\n- bar:    5').documents.map(d => d.root.getValue())
 
-			assert.deepStrictEqual(result.getValue(), expected.getValue())
+			assert.deepStrictEqual(actualValues, expectedValues)
 		})
 
 		test('errors on missing reference', function () {
@@ -1380,5 +1380,19 @@ suite('YAML Parser', () => {
 			isInvalid('- foo: &ref 5\n- bar: *re')
 		})
 	})
+
+	suite('Multiple Documents', () => {
+		test.only("are parsed", function(){
+			const input = `---
+value: 1
+...
+---
+value: 2
+...`
+			isValid(input);
+			const result = YamlParser.parse(input)
+			console.log(result)
+		})
+	});
 
 });
