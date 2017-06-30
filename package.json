@@ -28,6 +28,6 @@
     "@types/mocha": "^2.2.41",
     "@types/node": "^7.0.31",
     "mocha": "^3.4.2",
-    "typescript": "^2.3.4"
+    "typescript": "2.3.4"
   }
 }
