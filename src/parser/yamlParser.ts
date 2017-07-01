@@ -234,8 +234,10 @@ function recursivelyBuildAst(parent: ASTNode, node: Yaml.YAMLNode): ASTNode {
 
 			break;
 		}
-		case Yaml.Kind.INCLUDE_REF:
 		case Yaml.Kind.ANCHOR_REF: {
+			return recursivelyBuildAst(parent, (<Yaml.YAMLAnchorReference>node).value);
+		}
+		case Yaml.Kind.INCLUDE_REF: {
 			// Issue Warning
 			console.log("Unsupported feature, node kind: " + node.kind);
 			break;
