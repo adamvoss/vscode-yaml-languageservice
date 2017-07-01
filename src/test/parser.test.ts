@@ -1365,13 +1365,20 @@ suite('YAML Parser', () => {
 		assertParse('{\n"far": "boo"\n}', 0);
 	});
 
-	test('parse with anchor reference expands reference', function() {
-		isValid('- foo: &ref 5\n- bar: *ref')
+	suite('anchor references', () => {
+		test('expands reference', function () {
+			isValid('- foo: &ref 5\n- bar: *ref')
 
-		const result = YamlParser.parse('- foo: &ref 5\n- bar: *ref').root
-		const expected = YamlParser.parse('- foo:     5\n- bar:    5').root
+			const result = YamlParser.parse('- foo: &ref 5\n- bar: *ref').root
+			const expected = YamlParser.parse('- foo:     5\n- bar:    5').root
 
-		assert.deepStrictEqual(result.getValue(), expected.getValue())
+			assert.deepStrictEqual(result.getValue(), expected.getValue())
+		})
+
+		test('errors on missing reference', function () {
+			isInvalid('- bar: *foo')
+			isInvalid('- foo: &ref 5\n- bar: *re')
+		})
 	})
 
 });

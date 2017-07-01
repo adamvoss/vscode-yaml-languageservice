@@ -235,7 +235,10 @@ function recursivelyBuildAst(parent: ASTNode, node: Yaml.YAMLNode): ASTNode {
 			break;
 		}
 		case Yaml.Kind.ANCHOR_REF: {
-			return recursivelyBuildAst(parent, (<Yaml.YAMLAnchorReference>node).value);
+			const instance = (<Yaml.YAMLAnchorReference>node).value
+
+			return recursivelyBuildAst(parent, instance) ||
+				new NullASTNode(parent, null, node.startPosition, node.endPosition);
 		}
 		case Yaml.Kind.INCLUDE_REF: {
 			// Issue Warning
