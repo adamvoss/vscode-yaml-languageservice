@@ -21,7 +21,7 @@
     "jsonc-parser": "^1.0.0",
     "vscode-json-languageservice": "file:./vscode-json-languageservice",
     "vscode-nls": "^2.0.2",
-    "yaml-ast-parser": "0.0.33"
+    "yaml-ast-parser": "0.0.34"
   },
   "devDependencies": {
     "@types/js-yaml": "^3.5.31",
