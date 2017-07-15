@@ -200,32 +200,32 @@ function recursivelyBuildAst(parent: ASTNode, node: Yaml.YAMLNode): ASTNode {
 		case Yaml.Kind.SCALAR: {
 			const instance = <Yaml.YAMLScalar>node;
 
-			const type = determineScalarType(instance)
+			const type = Yaml.determineScalarType(instance)
 
 			// The name is set either by the sequence or the mapping case.
 			const name = null;
 			const value = instance.value;
 
 			switch (type) {
-				case ScalarType.null: {
+				case Yaml.ScalarType.null: {
 					return new NullASTNode(parent, name, instance.startPosition, instance.endPosition);
 				}
-				case ScalarType.bool: {
-					return new BooleanASTNode(parent, name, parseYamlBoolean(value), node.startPosition, node.endPosition)
+				case Yaml.ScalarType.bool: {
+					return new BooleanASTNode(parent, name, Yaml.parseYamlBoolean(value), node.startPosition, node.endPosition)
 				}
-				case ScalarType.int: {
+				case Yaml.ScalarType.int: {
 					const result = new NumberASTNode(parent, name, node.startPosition, node.endPosition);
-					result.value = parseYamlInteger(value);
+					result.value = Yaml.parseYamlInteger(value);
 					result.isInteger = true;
 					return result;
 				}
-				case ScalarType.float: {
+				case Yaml.ScalarType.float: {
 					const result = new NumberASTNode(parent, name, node.startPosition, node.endPosition);
-					result.value = parseYamlFloat(value);
+					result.value = Yaml.parseYamlFloat(value);
 					result.isInteger = false;
 					return result;
 				}
-				case ScalarType.string: {
+				case Yaml.ScalarType.string: {
 					const result = new StringASTNode(parent, name, false, node.startPosition, node.endPosition);
 					result.value = node.value;
 					return result;
@@ -246,100 +246,6 @@ function recursivelyBuildAst(parent: ASTNode, node: Yaml.YAMLNode): ASTNode {
 			break;
 		}
 	}
-}
-
-export function parseYamlBoolean(input: string): boolean {
-	if (["true", "True", "TRUE"].lastIndexOf(input) >= 0) {
-		return true;
-	}
-	else if (["false", "False", "FALSE"].lastIndexOf(input) >= 0) {
-		return false;
-	}
-	throw `Invalid boolean "${input}"`
-}
-
-function safeParseYamlInteger(input: string): number {
-	// Use startsWith when es6 methods becomes available
-	if (input.lastIndexOf('0o', 0) === 0) {
-		return parseInt(input.substring(2), 8)
-	}
-
-	return parseInt(input);
-}
-
-export function parseYamlInteger(input: string): number {
-	const result = safeParseYamlInteger(input)
-
-	if (isNaN(result)) {
-		throw `Invalid integer "${input}"`
-	}
-
-	return result;
-}
-
-export function parseYamlFloat(input: string): number {
-
-	if ([".nan", ".NaN", ".NAN"].lastIndexOf(input) >= 0) {
-		return NaN;
-	}
-
-	const infinity = /^([-+])?(?:\.inf|\.Inf|\.INF)$/
-	const match = infinity.exec(input)
-	if (match) {
-		return (match[1] === '-') ? -Infinity : Infinity;
-	}
-
-	const result = parseFloat(input)
-
-	if (!isNaN(result)) {
-		return result;
-	}
-
-	throw `Invalid float "${input}"`
-}
-
-export enum ScalarType {
-	null, bool, int, float, string
-}
-
-export function determineScalarType(node: Yaml.YAMLScalar): ScalarType {
-	if (node === undefined) {
-		return ScalarType.null;
-	}
-
-	if (node.doubleQuoted || !node.plainScalar || node['singleQuoted']) {
-		return ScalarType.string
-	}
-
-	const value = node.value;
-
-	if (["null", "Null", "NULL", "~", ''].indexOf(value) >= 0) {
-		return ScalarType.null;
-	}
-
-	if (value === null || value === undefined) {
-		return ScalarType.null;
-	}
-
-	if (["true", "True", "TRUE", "false", "False", "FALSE"].indexOf(value) >= 0) {
-		return ScalarType.bool;
-	}
-
-	const base10 = /^[-+]?[0-9]+$/
-	const base8 = /^0o[0-7]+$/
-	const base16 = /^0x[0-9a-fA-F]+$/
-
-	if (base10.test(value) || base8.test(value) || base16.test(value)) {
-		return ScalarType.int;
-	}
-
-	const float = /^[-+]?(\.[0-9]+|[0-9]+(\.[0-9]*)?)([eE][-+]?[0-9]+)?$/
-	const infinity = /^[-+]?(\.inf|\.Inf|\.INF)$/
-	if (float.test(value) || infinity.test(value) || [".nan", ".NaN", ".NAN"].indexOf(value) >= 0) {
-		return ScalarType.float;
-	}
-
-	return ScalarType.string;
 }
 
 function convertError(e: Yaml.YAMLException) {
