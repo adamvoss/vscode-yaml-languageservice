@@ -367,8 +367,8 @@ export function parse(text: string): JSONDocument {
 
 	const duplicateKeyReason = 'duplicate key'
 
-	const errors = yamlDoc.errors.filter(e => e.reason !== duplicateKeyReason).map(e => convertError(e))
-	const warnings = yamlDoc.errors.filter(e => e.reason === duplicateKeyReason).map(e => convertError(e))
+	const errors = yamlDoc.errors.filter(e => e.reason !== duplicateKeyReason && !e.isWarning).map(e => convertError(e))
+	const warnings = yamlDoc.errors.filter(e => e.reason === duplicateKeyReason || e.isWarning).map(e => convertError(e))
 
 	errors.forEach(e => _doc.errors.push(e));
 	warnings.forEach(e => _doc.warnings.push(e));
