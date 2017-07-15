@@ -30,4 +30,19 @@ suite("Get Node from Offset", () => {
         // assertNameAndType(19, [], "property") //https://github.com/mulesoft-labs/yaml-ast-parser/issues/25
         // assertNameAndType(21, ["outer"], "property") //https://github.com/mulesoft-labs/yaml-ast-parser/issues/25
     })
+
+    test('Multiple Documents', function(){
+        const input = `---
+value: 1
+...
+---
+value: 2
+...`
+        
+        const document = YamlParser.parse(input)
+        const node = document.getNodeFromOffset(23)
+
+        assert.deepStrictEqual(node.getPath(), ["value"])
+        assert.deepEqual(node.type, "string")
+    })
 })

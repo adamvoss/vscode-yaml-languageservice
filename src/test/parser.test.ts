@@ -1382,7 +1382,7 @@ suite('YAML Parser', () => {
 	})
 
 	suite('Multiple Documents', () => {
-		test.only("are parsed", function(){
+		test("are parsed", function () {
 			const input = `---
 value: 1
 ...
@@ -1391,7 +1391,29 @@ value: 2
 ...`
 			isValid(input);
 			const result = YamlParser.parse(input)
-			console.log(result)
+
+			const values = result.documents.map(d => d.root.getValue())
+			assert.deepEqual(values, [{ value: 1 }, { value: 2 }])
+		})
+
+		test("are validated", function () {
+			const input = `---
+value: 1
+...
+---
+value: hello
+...`
+
+			const doc = YamlParser.parse(input)
+			const schema: JsonSchema.JSONSchema = {
+				additionalProperties: {
+					type: 'number'
+				}
+			};
+			doc.validate(schema)
+
+			assert.strictEqual(doc.errors.length, 0)
+			assert.strictEqual(doc.warnings.length, 1)
 		})
 	});
 
