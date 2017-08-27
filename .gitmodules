@@ -1,3 +1,0 @@
-[submodule "vscode-json-languageservice"]
-	path = vscode-json-languageservice
-	url = https://github.com/Microsoft/vscode-json-languageservice.git

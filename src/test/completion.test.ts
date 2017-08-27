@@ -1,5 +1,7 @@
 "use strict"
 
+import "mocha";
+
 import assert = require('assert');
 
 import { TextDocument } from "vscode-languageserver-types";

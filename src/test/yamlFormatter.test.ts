@@ -1,3 +1,4 @@
+import "mocha";
 import { format } from '../services/yamlFormatter'
 import { TextDocument } from 'vscode-languageserver-types';
 import assert = require("assert");

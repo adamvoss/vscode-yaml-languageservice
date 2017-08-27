@@ -1,3 +1,5 @@
+import "mocha";
+
 import assert = require('assert');
 
 import * as calc from '../documentPositionCalculator'

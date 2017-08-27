@@ -9,6 +9,11 @@
 		"outDir": "../lib",
 		"lib": [
 			"es6"
-		]
+		],
+		"baseUrl": "../types",
+		"typeRoots": [
+			"../node_modules/@types",
+            "../types"
+        ]
 	}
 }

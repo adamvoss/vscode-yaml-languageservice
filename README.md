@@ -14,14 +14,20 @@ The following functionality is incomplete:
  - *doResolve* resolves a completion proposals.
 
 ## Contributing
-Contributions are welcome!  To install dependencies and begin work, run:
+Contributions are welcome!
+
+To install dependencies and begin work, run:
 
 ```sh
-git submodule update --init
-./npminstall.sh
+npm install
 ```
 
-This depends on internals of [vscode-json-languageservice](https://github.com/Microsoft/vscode-json-languageservice/) so importing its NPM module was not an option.  Therefore, you must use the above commands instead of `npm install`.
+To run tests:
 
-## Installation
-If this is useful to you, and you would like to see it on NPM, please submit a pull request or open an issue.
+```
+npm test
+```
+
+### vscode-json-languageservice type definitions
+
+This depends on internals of [vscode-json-languageservice](https://github.com/Microsoft/vscode-json-languageservice/) where relevant type information is not currently published (see [Microsoft/vscode-json-languageservice#11](https://github.com/Microsoft/vscode-json-languageservice/pull/11)).  To workaround this limitation, external type definitions are used.  When newer type definitions are needed, manually compile **vscode-json-languageservice** locally and copy the resulting type definitions over the definitions in the `types` directory of this project.
