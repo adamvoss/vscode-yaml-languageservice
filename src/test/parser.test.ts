@@ -1169,7 +1169,7 @@ suite('YAML Parser', () => {
 			},
 			dependencies: {
 				a: ['b']
-			}
+			} as JsonSchema.JSONSchemaMap
 		};
 
 		doc.validate(schema);
