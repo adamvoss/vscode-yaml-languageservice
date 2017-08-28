@@ -1,5 +1,6 @@
 'use strict';
 
+import "mocha";
 import assert = require('assert');
 import YamlParser = require('../parser/yamlParser');
 

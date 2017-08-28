@@ -1,9 +1,9 @@
 {
   "name": "vscode-yaml-languageservice",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Language service for YAML",
-  "main": "./lib/src/yamlLanguageService.js",
-  "typings": "./lib/src/jsonLanguageService",
+  "main": "./lib/yamlLanguageService.js",
+  "typings": "./lib/yamlLanguageService",
   "author": "Adam Voss",
   "license": "MIT",
   "repository": {
@@ -19,15 +19,15 @@
   "dependencies": {
     "js-yaml": "^3.8.4",
     "jsonc-parser": "^1.0.0",
-    "vscode-json-languageservice": "file:./vscode-json-languageservice",
+    "vscode-json-languageservice": "^2.0.14",
     "vscode-nls": "^2.0.2",
     "yaml-ast-parser": "0.0.34"
   },
   "devDependencies": {
     "@types/js-yaml": "^3.5.31",
     "@types/mocha": "^2.2.41",
-    "@types/node": "^7.0.31",
+    "@types/node": "^8.0.25",
     "mocha": "^3.4.2",
-    "typescript": "2.3.4"
+    "typescript": "^2.4.2"
   }
 }

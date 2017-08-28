@@ -8,20 +8,20 @@
 import {TextDocument, Position, CompletionItem, CompletionList, Hover, Range, SymbolInformation, Diagnostic,
 	TextEdit, FormattingOptions, MarkedString} from 'vscode-languageserver-types';
 
-import {JSONCompletion} from '../vscode-json-languageservice/src/services/jsonCompletion';
-import {JSONHover} from '../vscode-json-languageservice/src/services/jsonHover';
-import {JSONValidation} from '../vscode-json-languageservice/src/services/jsonValidation';
-import {JSONSchema} from '../vscode-json-languageservice/src/jsonSchema';
-import {JSONDocumentSymbols} from '../vscode-json-languageservice/src/services/jsonDocumentSymbols';
-import {parse as JSONDocumentConfig} from '../vscode-json-languageservice/src/parser/jsonParser';
+import {JSONCompletion} from 'vscode-json-languageservice/lib/services/jsonCompletion';
+import {JSONHover} from 'vscode-json-languageservice/lib/services/jsonHover';
+import {JSONValidation} from 'vscode-json-languageservice/lib/services/jsonValidation';
+import {JSONSchema} from 'vscode-json-languageservice/lib/jsonSchema';
+import {JSONDocumentSymbols} from 'vscode-json-languageservice/lib/services/jsonDocumentSymbols';
+import {parse as JSONDocumentConfig} from 'vscode-json-languageservice/lib/parser/jsonParser';
 
 import {parse as parseYAML} from './parser/yamlParser';
 import {isInComment} from './services/yamlCompletion'
 import {format as formatYAML} from './services/yamlFormatter';
 
-import {schemaContributions} from '../vscode-json-languageservice/src/services/configuration';
-import {JSONSchemaService} from '../vscode-json-languageservice/src/services/jsonSchemaService';
-import {JSONWorkerContribution, JSONPath, Segment, CompletionsCollector} from '../vscode-json-languageservice/src/jsonContributions';
+import {schemaContributions} from 'vscode-json-languageservice/lib/services/configuration';
+import {JSONSchemaService} from 'vscode-json-languageservice/lib/services/jsonSchemaService';
+import {JSONWorkerContribution, JSONPath, Segment, CompletionsCollector} from 'vscode-json-languageservice/lib/jsonContributions';
 
 export type JSONDocument = {}
 export type YAMLDocument = { documents: JSONDocument[]}

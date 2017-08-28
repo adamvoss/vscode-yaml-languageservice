@@ -1,7 +1,7 @@
 'use strict';
 
 import jsyaml = require('js-yaml')
-import {EOL} from 'os'
+import { EOL } from 'os';
 import { TextDocument, Range, Position, FormattingOptions, TextEdit } from 'vscode-languageserver-types';
 
 export function format(document: TextDocument, options: FormattingOptions): TextEdit[] {
@@ -15,7 +15,7 @@ export function format(document: TextDocument, options: FormattingOptions): Text
         const yaml = documents[0]
         newText = jsyaml.safeDump(yaml, { indent: options.tabSize })
     }
-    else{
+    else {
         const formatted = documents.map(d => jsyaml.safeDump(d, { indent: options.tabSize }))
         newText = '%YAML 1.2' + EOL + '---' + EOL + formatted.join('...' + EOL + '---' + EOL) + '...' + EOL
     }

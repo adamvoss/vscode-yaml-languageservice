@@ -5,11 +5,12 @@
  *--------------------------------------------------------------------------------------------*/
 'use strict';
 
+import "mocha";
 import assert = require('assert');
 import YamlParser = require('../parser/yamlParser');
-import Parser = require('../../vscode-json-languageservice/src/parser/jsonParser');
-import SchemaService = require('../../vscode-json-languageservice/src/services/jsonSchemaService');
-import JsonSchema = require('../../vscode-json-languageservice/src/jsonSchema');
+import Parser = require('vscode-json-languageservice/lib/parser/jsonParser');
+import SchemaService = require('vscode-json-languageservice/lib/services/jsonSchemaService');
+import JsonSchema = require('vscode-json-languageservice/lib/jsonSchema');
 
 suite('YAML Parser', () => {
 
@@ -1168,7 +1169,7 @@ suite('YAML Parser', () => {
 			},
 			dependencies: {
 				a: ['b']
-			}
+			} as JsonSchema.JSONSchemaMap
 		};
 
 		doc.validate(schema);

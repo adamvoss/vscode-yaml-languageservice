@@ -1,7 +1,7 @@
 'use strict';
 
-import { JSONDocument, ASTNode, ErrorCode, BooleanASTNode, NullASTNode, ArrayASTNode, NumberASTNode, ObjectASTNode, PropertyASTNode, StringASTNode, IError, IApplicableSchema } from '../../vscode-json-languageservice/src/parser/jsonParser';
-import { JSONSchema } from '../../vscode-json-languageservice/src/jsonSchema';
+import { JSONDocument, ASTNode, ErrorCode, BooleanASTNode, NullASTNode, ArrayASTNode, NumberASTNode, ObjectASTNode, PropertyASTNode, StringASTNode, IError, IApplicableSchema } from 'vscode-json-languageservice/lib/parser/jsonParser';
+import { JSONSchema } from 'vscode-json-languageservice/lib/jsonSchema';
 
 import * as nls from 'vscode-nls';
 const localize = nls.loadMessageBundle();
