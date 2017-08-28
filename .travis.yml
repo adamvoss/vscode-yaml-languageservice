@@ -6,11 +6,17 @@ node_js:
   - '7'
   - '8'
 deploy:
-  provider: npm
-  email: vossad01@gmail.com
-  api_key:
-    secure: >-
-      sNO19+NGAmQncPhRP9LA59Q7TnvBmJ+aHxaNXaLFUnwVy1O4HWOeH4B0cqaaNOOpuknAEhtuU1p5E9XpehHHgW18XdTdiHuE81uOFQP1CDgEC8EKidOM85CsTlEyN8J9bF+dVwoCnyttPjk0Gg3Ohm9A6apBvn6TDJSAehM7Z03M2Py65o4svvViBA8q2tV5P1Jyl6NT7E/1YRWpYV+GnB2zpWsodk3Vu/ZoMFFjKVjxsl+Z5OxfkVb/+AW6fxSHRJjN7/qFy8ycQfz2gU/iMNxF6nD5tsQWHQf8uRTrRWkDrDpFiU6LC67QwA2eVRoS/DZYTSvUi+0Y45ZD8lomNsXq3FekpbcKv8OGcv+G2UKGO3C57wd9keqqFyEFYHfBAoiO292yjGkWqo0I4E8cFYnKE8Wz/NLGW4uRAcOMyi6vfCWhNaQgUsS4xMNjgsrlapXjtw94ql+fIqQX8MKmT2R3gpt0BbMK2y4czE0gjAtMUbkZc7JEpzCR7JPkXHrKCCM56QJgHpaEbgFQTTZOkyEfxAFUyM6JxJ/wyN1u3s+TDhEQH4aIykCTcd3LeJcBQF5AMRUqRBxa+tpV+P9YYww4UayTQdSJjWzmO9DRaNTeanv0B0xJUOKjNk6V7xKUPixKcwlSDGr2Ve7UW2CQhw+gqKrWTT2s+DaxfWm4+BY=
-  on:
-    tags: true
-    repo: adamvoss/vscode-yaml-languageservice
+  - provider: npm
+    email: vossad01@gmail.com
+    api_key:
+      secure: >-
+        sNO19+NGAmQncPhRP9LA59Q7TnvBmJ+aHxaNXaLFUnwVy1O4HWOeH4B0cqaaNOOpuknAEhtuU1p5E9XpehHHgW18XdTdiHuE81uOFQP1CDgEC8EKidOM85CsTlEyN8J9bF+dVwoCnyttPjk0Gg3Ohm9A6apBvn6TDJSAehM7Z03M2Py65o4svvViBA8q2tV5P1Jyl6NT7E/1YRWpYV+GnB2zpWsodk3Vu/ZoMFFjKVjxsl+Z5OxfkVb/+AW6fxSHRJjN7/qFy8ycQfz2gU/iMNxF6nD5tsQWHQf8uRTrRWkDrDpFiU6LC67QwA2eVRoS/DZYTSvUi+0Y45ZD8lomNsXq3FekpbcKv8OGcv+G2UKGO3C57wd9keqqFyEFYHfBAoiO292yjGkWqo0I4E8cFYnKE8Wz/NLGW4uRAcOMyi6vfCWhNaQgUsS4xMNjgsrlapXjtw94ql+fIqQX8MKmT2R3gpt0BbMK2y4czE0gjAtMUbkZc7JEpzCR7JPkXHrKCCM56QJgHpaEbgFQTTZOkyEfxAFUyM6JxJ/wyN1u3s+TDhEQH4aIykCTcd3LeJcBQF5AMRUqRBxa+tpV+P9YYww4UayTQdSJjWzmO9DRaNTeanv0B0xJUOKjNk6V7xKUPixKcwlSDGr2Ve7UW2CQhw+gqKrWTT2s+DaxfWm4+BY=
+    on:
+      tags: true
+  - provider: releases
+    api_key:
+      secure: >-
+        hjSix3LS2pLuV1OOlgEQZt1GDKPLh/8gu81RkPXKfzTR6mWmBdSfPM0UMO+eUPYSTMFuUj1xNAFKwBu1HOKE6bfYtpMoYHGH+t7MDOUB8hgbdgVeBC+rxXYM8fyrGCkxIGyZVZpmMCKHrmH2t/PelMMZdD/2shcCPFPUvlPN3t61nS+UB8PCHQVUCkw+29ET7pB0iJW948aPbgFcf1glaXSLvj0fqbvrHmgW9x/1HqVO/TbdrK2WGa9nw8LCq5OOR3kkWn2HvdiamNV1EOBHQ94YfE399xLhg7m3V7JIQsLpXNPQJy/mKb1saFzIVh2dsY+5Iq+SW3iM/R47VYE4VOaFHdccEK4KrUCSKgLkaucfZd08s1/YeFp3774xTTpFhcZZyhhi+//MT3qfGS20ZGPiVDKRZKi2YTw72grhJ8dOuHlz3clUeNJvfkwCImlfYxFuINiBMFCJ9D8w+5cu+SW/bJLC7WKy73YAl0np4sLKuqGl0OvxXX0lBUHKKl9XLk81isIMJyYkL+XU6A4fcer1zgnSV50zG5rtqLLd8BJ4rR7+gQKLXDWs7+PexvOpS54Y3ZCv0O5EAjNzDdQ3whJslgcyi/AVfHGSWWf6AthTcO5hddd8Rc8jnyO834gJhEBNtCZZrgqSZWGY2POMEKabXrt5lVFKD7u721kZSsE=
+    file: ''
+    on:
+      tags: true
