@@ -1,6 +1,8 @@
 # vscode-yaml-languageservice
 YAML language service built on top of [vscode-json-languageservice](https://github.com/Microsoft/vscode-json-languageservice/) and intended for similar usage.  It powers the [YAML language extension for Visual Studio Code](https://github.com/adamvoss/vscode-yaml).
 
+[![NPM version](https://img.shields.io/npm/v/vscode-yaml-languageservice.svg)](http://www.npmjs.com/package/vscode-yaml-languageservice)
+
 ## Why
 To provide a YAML editor experience that has parity with the JSON.
 
