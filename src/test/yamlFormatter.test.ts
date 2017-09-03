@@ -100,4 +100,10 @@ suite("YAML Formatter", () => {
 ...
 `)
   })
+
+  test("outputs yaml 1.2", () => {
+    assertFormatedEqual(`on: {tags: true}`, `on:
+  tags: true
+`)
+  })
 })

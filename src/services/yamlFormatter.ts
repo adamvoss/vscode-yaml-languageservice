@@ -10,13 +10,15 @@ export function format(document: TextDocument, options: FormattingOptions): Text
     const documents = []
     jsyaml.loadAll(text, doc => documents.push(doc))
 
+    const dumpOptions = { indent: options.tabSize, noCompatMode: true };
+
     let newText;
     if (documents.length == 1) {
         const yaml = documents[0]
-        newText = jsyaml.safeDump(yaml, { indent: options.tabSize })
+        newText = jsyaml.safeDump(yaml, dumpOptions)
     }
     else {
-        const formatted = documents.map(d => jsyaml.safeDump(d, { indent: options.tabSize }))
+        const formatted = documents.map(d => jsyaml.safeDump(d, dumpOptions))
         newText = '%YAML 1.2' + EOL + '---' + EOL + formatted.join('...' + EOL + '---' + EOL) + '...' + EOL
     }
 
