@@ -37,7 +37,6 @@ export interface LanguageService {
 	doResolve(item: CompletionItem): Thenable<CompletionItem>;
 	doComplete(document: TextDocument, position: Position, doc: YAMLDocument): Thenable<CompletionList>;
 	findDocumentSymbols(document: TextDocument, doc: YAMLDocument): SymbolInformation[];
-	findColorSymbols(document: TextDocument, doc: YAMLDocument): Thenable<Range[]>;
 	doHover(document: TextDocument, position: Position, doc: YAMLDocument): Thenable<Hover>;
 	format(document: TextDocument, options: FormattingOptions): TextEdit[];
 }
@@ -182,7 +181,6 @@ export function getLanguageService(params: LanguageServiceParams): LanguageServi
 		doResolve: jsonCompletion.doResolve.bind(jsonCompletion),
 		doComplete: jsonCompletion.doComplete.bind(jsonCompletion),
 		findDocumentSymbols: jsonDocumentSymbols.findDocumentSymbols.bind(jsonDocumentSymbols),
-		findColorSymbols: jsonDocumentSymbols.findColorSymbols.bind(jsonDocumentSymbols),
 		doHover: jsonHover.doHover.bind(jsonHover),
 		format: formatYAML
 	};
