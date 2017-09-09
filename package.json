@@ -1,6 +1,6 @@
 {
   "name": "vscode-yaml-languageservice",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Language service for YAML",
   "main": "./lib/yamlLanguageService.js",
   "typings": "./lib/yamlLanguageService",
