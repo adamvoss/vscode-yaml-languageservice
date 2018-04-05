@@ -19,7 +19,7 @@
   "dependencies": {
     "js-yaml": "^3.8.4",
     "jsonc-parser": "^1.0.0",
-    "vscode-json-languageservice": "^2.0.14",
+    "vscode-json-languageservice": "2.0.14",
     "vscode-nls": "^2.0.2",
     "yaml-ast-parser": "0.0.34"
   },
